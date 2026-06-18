@@ -1,13 +1,12 @@
 package org.example.summarizer.domain;
 
-import java.util.LinkedList;
+import java.time.LocalDate;
 
-public class Paper {
-    String title;
-    long id;
-    String datePublished;
-    String dateUpdated;
-    String summary;
-    String authors;
-    String pdfLink;
-}
+public record Paper (
+    String title,
+    long id,
+    LocalDate datePublished,
+    LocalDate dateUpdated,
+    String authors,
+    String pdfLink
+) {}

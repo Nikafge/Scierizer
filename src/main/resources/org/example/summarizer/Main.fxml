@@ -45,7 +45,7 @@
 
 <VBox prefHeight="400.0" prefWidth="640.0" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1">
   <children>
-    <AnchorPane maxHeight="-1.0" maxWidth="-1.0" prefHeight="312.0" prefWidth="1220.0" VBox.vgrow="ALWAYS">
+    <AnchorPane maxHeight="-1.0" maxWidth="-1.0" prefHeight="464.0" prefWidth="715.0" VBox.vgrow="ALWAYS">
       <children>
             <TextArea layoutX="171.0" layoutY="126.0" prefHeight="26.0" prefWidth="269.0" text="Search by title, authors or keywords">
                <font>
