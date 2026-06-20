@@ -4,6 +4,6 @@ module org.example.summarizer {
 
     requires org.kordamp.bootstrapfx.core;
 
-    opens org.example.summarizer to javafx.fxml;
+    opens org.example.summarizer.view to javafx.fxml;
     exports org.example.summarizer;
 }

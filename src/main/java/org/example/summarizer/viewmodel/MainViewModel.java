@@ -8,14 +8,7 @@ import org.example.summarizer.service.PaperSearchService;
 
 import java.util.List;
 
-public class MainVeiwModel {
-//    private final String searchBar;
-//    private final String category;
-//
-//    public MainVeiwModel(String category, String searchBar) {
-//        this.category = category;
-//        this.searchBar = searchBar;
-//    }
+public class MainViewModel {
 
     private final PaperSearchService paperSearchService;
 
@@ -27,22 +20,32 @@ public class MainVeiwModel {
     private final StringProperty errorMessage = new SimpleStringProperty("");
 
 
-    public MainVeiwModel(PaperSearchService paperSearchService) {
+    public MainViewModel(PaperSearchService paperSearchService) {
         this.paperSearchService = paperSearchService;
     }
 
     public void search() {
         String query = searchQuery.get();
 
-        if (query == null) {
-            errorMessage.set("Chose a category!");
+//        if (query.isEmpty() /*|| chosenCategory.isNull().get()*/) {
+//            errorMessage.set("Chose a category or type to search!");
+//        }
+        if (query.isEmpty() || query == null) {
+            errorMessage.set("Type something to search");
+            papers.clear();
+            return;
         }
-
+        if (chosenCategory.isNull().get() || chosenCategory == null) {
+            errorMessage.set("Select a category");
+            papers.clear();
+            return;
+        }
         loading.set(true);
-
         try {
-            //Fix this((((
-            //            List<Paper> foundPapers = paperSearchService.search(query, chosenCategory);
+
+            errorMessage.set("");
+            List<Paper> foundPapers = paperSearchService.search(query, chosenCategory.get());
+            papers.setAll(foundPapers.stream().map(PaperViewModel::new).toList());
 
         } catch (Exception e) {
             errorMessage.set("Something went wrong");
@@ -54,7 +57,7 @@ public class MainVeiwModel {
     public StringProperty searchQueryProperty () {
         return searchQuery;
     }
-    public ObjectProperty<Category> ChosenCategory() {
+    public ObjectProperty<Category> chosenCategoryProperty() {
         return chosenCategory;
     }
     public ObservableList<PaperViewModel> papers() {
