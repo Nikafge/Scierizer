@@ -1,14 +1,8 @@
 package org.example.summarizer.infrastructure.arxiv;
 
 import org.example.summarizer.domain.Paper;
-
-import javax.net.ssl.HttpsURLConnection;
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.net.http.HttpClient;
@@ -16,6 +10,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -45,7 +40,15 @@ public class ArxivClient {
 
 
             //Make that shi
-            return paperCollector(StringToListConverter(response.body()));
+            List<String> papersAsStrings = StringToListConverter(response.body());
+            List<Paper> resultingPapers = new ArrayList<>();
+
+            for(String paperAsString : papersAsStrings) {
+                resultingPapers.add(parsePaper(paperAsString));
+            }
+
+//            return paperCollector(StringToListConverter(response.body()));
+            return resultingPapers;
         }
         catch (IOException e) {
             Thread.currentThread().interrupt();
@@ -54,38 +57,79 @@ public class ArxivClient {
         }
     }
 
+    //Converts a single string to a list of strings
     public List<String> StringToListConverter (String apiResponse) {
-        List<String> Papers = new ArrayList<>();
 
-        Pattern pattern = Pattern.compile("<entry>(.*?)</entry>", Pattern.DOTALL);
+        Pattern pattern = Pattern.compile("<entry[^>]*>(.*?)</entry>", Pattern.DOTALL);
         Matcher matcher = pattern.matcher(apiResponse);
-
+        List<String> papersAsStrings =  new ArrayList<>();
         int i = 0;
-        while (matcher.find() || i >= 19)  {
+
+        while(matcher.find() && i < 20) {
+            papersAsStrings.add(matcher.group());
             i++;
-            Papers.add(matcher.group(1));
         }
-
-        return Papers;
+        return papersAsStrings;
     }
 
-    public String parsePaper(String paperInfo) {
-
-        String parsedPaperData = null;
-
-        while (true) {
-            break;
-
-
-
+    // New Method for extraction
+    public String extractField(String source, String tagName) {
+        Pattern pattern = Pattern.compile("<" + tagName + "[^>]*>(.*?)</" + tagName + ">", Pattern.DOTALL);
+        Matcher matcher = pattern.matcher(source);
+        if(matcher.find()) {
+            return matcher.group(1);
         }
-
-        return parsedPaperData;
-    }
-
-    public List<Paper> paperCollector(List<String> entries) {
-
         return null;
+    }
+
+    public Paper parsePaper(String paperInfo) {
+
+        //title and summary
+        String title = extractField(paperInfo, "title");
+        String summary = extractField(paperInfo, "summary");
+
+        //authors
+        List<String> authorsList = new ArrayList<>();
+        Pattern pattern = Pattern.compile("<name[^>]*>(.*?)</name>", Pattern.DOTALL);
+        Matcher matcher = pattern.matcher(paperInfo);
+        while (matcher.find()) {
+            authorsList.add(matcher.group(1));
+        }
+        String authors = String.join("|", authorsList);
+
+        //link
+        String pdfLink = null;
+        pattern = Pattern.compile("<link[^>]*/>");
+        matcher = pattern.matcher(paperInfo);
+        while (matcher.find()) {
+            String linkTag = matcher.group();
+            if (linkTag.contains("type=\"application/pdf\"")) {
+                Pattern hrefPatter = Pattern.compile("href=\"([^\"]+)\"");
+                Matcher hrefMatcher = hrefPatter.matcher(linkTag);
+                if (hrefMatcher.find()) {
+                    pdfLink = hrefMatcher.group(1);
+                }
+            }
+        }
+
+        //updatedAt
+        pattern = Pattern.compile("<updated[^>]*>(\\d{4}-\\d{2}-\\d{2})T", Pattern.DOTALL);
+        matcher = pattern.matcher(paperInfo);
+        String updatedAt = null;
+        if (matcher.find()) {
+            updatedAt = matcher.group(1);
+        }
+
+        //PublishedAt
+        pattern = Pattern.compile("<published[^>]*>(\\d{4}-\\d{2}-\\d{2})T", Pattern.DOTALL);
+        matcher = pattern.matcher(paperInfo);
+        String publishedAt = null;
+        if (matcher.find()) {
+            publishedAt = matcher.group(1);
+        }
+
+        //TO DO - replace the hardcoded zero!!!
+        return new Paper(title, 0, summary, LocalDate.parse(publishedAt), LocalDate.parse(updatedAt), authors, pdfLink);
     }
 
 
