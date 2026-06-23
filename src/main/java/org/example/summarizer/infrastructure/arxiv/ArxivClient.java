@@ -53,7 +53,7 @@ public class ArxivClient {
         }
         catch (IOException e) {
             Thread.currentThread().interrupt();
-            httpClient.close();
+//            httpClient.close();
             throw new RuntimeException("Failed to get response!", e);
         }
     }

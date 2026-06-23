@@ -6,7 +6,9 @@ import org.example.summarizer.viewmodel.Category;
 import org.example.summarizer.viewmodel.MainViewModel;
 import org.example.summarizer.viewmodel.PaperViewModel;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class MainViewController {
 
@@ -33,15 +35,15 @@ public class MainViewController {
     @FXML
     private ToggleButton compSciButton;
     @FXML
-    private ToggleButton quantitativeBiology;
+    private ToggleButton quantitativeBiologyButton;
     @FXML
-    private ToggleButton quantitativeFinance;
+    private ToggleButton quantitativeFinanceButton;
     @FXML
-    private ToggleButton statistics;
+    private ToggleButton statisticsButton;
     @FXML
-    private ToggleButton engineering;
+    private ToggleButton engineeringButton;
     @FXML
-    private ToggleButton economics;
+    private ToggleButton economicsButton;
 
 
 
@@ -55,17 +57,22 @@ public class MainViewController {
 
     private void initializeCategoryButtons() {
         List<ToggleButton> categoryButtons = List.of(physicsButton, mathButton, compSciButton,
-                quantitativeFinance, quantitativeBiology, statistics, engineering, economics);
+                quantitativeFinanceButton, quantitativeBiologyButton, statisticsButton, engineeringButton, economicsButton);
         categoryButtons.forEach(button -> button.setToggleGroup(toggleGroup));
 
+        Map<ToggleButton, Category> map = new HashMap<>();
+        map.forEach((button, category) -> ToggleButton.setUserData(Category.values()));
+
+
+// TO DO LIST
         physicsButton.setUserData(Category.Physics);
         mathButton.setUserData(Category.Mathematics);
         compSciButton.setUserData(Category.Computer_Science);
-        quantitativeFinance.setUserData(Category.Quantitative_Finance);
-        quantitativeBiology.setUserData(Category.Quantitative_Biology);
-        statistics.setUserData(Category.Statistics);
-        engineering.setUserData(Category.Engineering);
-        economics.setUserData(Category.Economics);
+        quantitativeFinanceButton.setUserData(Category.Quantitative_Finance);
+        quantitativeBiologyButton.setUserData(Category.Quantitative_Biology);
+        statisticsButton.setUserData(Category.Statistics);
+        engineeringButton.setUserData(Category.Engineering);
+        economicsButton.setUserData(Category.Economics);
 
     }
 

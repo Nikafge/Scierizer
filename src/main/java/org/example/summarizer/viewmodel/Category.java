@@ -1,14 +1,14 @@
 package org.example.summarizer.viewmodel;
 
 public enum Category {
-    Physics ("Physics"),
-    Computer_Science ("Comp-sci"),
-    Quantitative_Finance ("Quant. finance"),
-    Engineering ("Engineering"),
-    Mathematics ("Mathematics"),
-    Quantitative_Biology ("Quant. biology"),
-    Statistics ("Statistics"),
-    Economics ("Economics");
+    Physics ("PHYSICS"),
+    Computer_Science ("COMP_SCI"),
+    Quantitative_Finance ("QUANT_FINANCE"),
+    Engineering ("ENGINEERING"),
+    Mathematics ("MATHEMATICS"),
+    Quantitative_Biology ("QUANT_BIOLOGY"),
+    Statistics ("STATISTICS"),
+    Economics ("ECONOMICS");
 
     private final String displayName;
 //    private final String arxivCode;
