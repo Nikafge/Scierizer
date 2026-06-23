@@ -4,7 +4,7 @@ import java.time.LocalDateTime;
 
 public record Summary(
         long id,
-        long paperId,
+        String paperId,
         String content,
         LocalDateTime generatedAt
 ) {}

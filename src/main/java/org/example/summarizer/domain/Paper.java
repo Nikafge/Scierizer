@@ -4,8 +4,8 @@ import java.time.LocalDate;
 
 public record Paper (
         String title,
-        long id,
-        String summary,
+        String id,
+        String abstractText,
         LocalDate datePublished,
         LocalDate dateUpdated,
         String authors,

@@ -19,11 +19,12 @@ import java.util.regex.Pattern;
 
 public class ArxivClient {
 
-    private String baseUrl = "http://export.arxiv.org/api/query?search_query=";
+    private String baseUrl = "https://export.arxiv.org/api/query?search_query=";
 //    String parameters;
 
     public List<Paper> paperResponse(String parameters) throws IOException, InterruptedException {
         String resultingUrl = baseUrl + parameters;
+        System.out.println(resultingUrl);
         URL searchUrl = new URL(resultingUrl);
 
         BufferedReader br = null;
@@ -57,7 +58,7 @@ public class ArxivClient {
         }
     }
 
-    //Converts a single string to a list of strings
+    //Converts a single string to a list of strings for different papers
     public List<String> StringToListConverter (String apiResponse) {
 
         Pattern pattern = Pattern.compile("<entry[^>]*>(.*?)</entry>", Pattern.DOTALL);
@@ -82,6 +83,7 @@ public class ArxivClient {
         return null;
     }
 
+    // Extracts metadata from API response
     public Paper parsePaper(String paperInfo) {
 
         //title and summary
@@ -129,10 +131,6 @@ public class ArxivClient {
         }
 
         //TO DO - replace the hardcoded zero!!!
-        return new Paper(title, 0, summary, LocalDate.parse(publishedAt), LocalDate.parse(updatedAt), authors, pdfLink);
+        return new Paper(title, String.valueOf(0), summary, LocalDate.parse(publishedAt), LocalDate.parse(updatedAt), authors, pdfLink);
     }
-
-
-
-    // "http://export.arxiv.org/api/query?search_query=all:electron&start=0&max_results=1"
 }
