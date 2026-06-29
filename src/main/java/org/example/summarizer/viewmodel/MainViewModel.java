@@ -7,6 +7,7 @@ import org.example.summarizer.domain.Paper;
 import org.example.summarizer.service.PaperSearchService;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class MainViewModel {
 
@@ -27,9 +28,6 @@ public class MainViewModel {
     public void search() {
         String query = searchQuery.get();
 
-//        if (query.isEmpty() /*|| chosenCategory.isNull().get()*/) {
-//            errorMessage.set("Chose a category or type to search!");
-//        }
         if (query.isEmpty() || query == null) {
             errorMessage.set("Type something to search");
             papers.clear();
@@ -45,7 +43,7 @@ public class MainViewModel {
 
             errorMessage.set("");
             List<Paper> foundPapers = paperSearchService.search(query, chosenCategory.get());
-            papers.setAll(foundPapers.stream().map(PaperViewModel::new).toList());
+            papers.setAll(foundPapers.stream().map(paper -> new PaperViewModel(paper)).toList());
 
         } catch (Exception e) {
             errorMessage.set("Something went wrong");

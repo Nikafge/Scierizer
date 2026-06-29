@@ -11,8 +11,6 @@ import java.util.List;
 public class PaperSearchService {
 
     private final ArxivClient arxivClient;
-    private final String baseUrl = "https://export.arxiv.org/api/query?search_query=";
-
 
     public PaperSearchService(ArxivClient arxivClient) {
         this.arxivClient = arxivClient;
@@ -20,9 +18,9 @@ public class PaperSearchService {
 
     public String urlRequestBuilder(String query, Category category) {
         if (category == null) {
-            return query + "all:" + query;
+            return "all:" + query;
         }
-        return "all:" + query + "+AND+cat:" + category.getDisplayName();
+        return "all:" + query + "+AND+cat:" + category.getDisplayName() + ".*";
     }
 
 
@@ -31,9 +29,7 @@ public class PaperSearchService {
         if (query == null && category == null) {
             throw new IllegalArgumentException("Both query and category cannot be empty!");
         }
-
-        String url = baseUrl + urlRequestBuilder(query, category);
-
-        return arxivClient.paperResponse(url);
+        String parameters = urlRequestBuilder(query, category);
+        return arxivClient.paperResponse(parameters);
     }
 }

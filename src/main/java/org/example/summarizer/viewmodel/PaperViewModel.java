@@ -9,14 +9,14 @@ public class PaperViewModel {
 
     private final StringProperty title;
     private final StringProperty authors;
-    private final StringProperty abstractText;
+//    private final StringProperty abstractText;
 // Need to add this thing later!!!
 
-    public PaperViewModel(Paper paper, StringProperty abstractText) {
+    public PaperViewModel(Paper paper/*, StringProperty abstractText*/) {
         this.paper = paper;
         this.title = new SimpleStringProperty(paper.title());
         this.authors = new SimpleStringProperty(paper.authors());
-        this.abstractText = new SimpleStringProperty(paper.abstractText());
+//        this.abstractText = new SimpleStringProperty(paper.abstractText());
 // Need to add this thing later!!!
     }
 
@@ -36,9 +36,5 @@ public class PaperViewModel {
     public StringProperty authorsProperty() {
         return authors;
     }
-
-//    public StringProperty aubstractPreviewProperty() {
-//        return abstractProperty;
-//    }
 
 }

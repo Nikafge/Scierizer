@@ -20,15 +20,11 @@ import java.util.regex.Pattern;
 public class ArxivClient {
 
     private String baseUrl = "https://export.arxiv.org/api/query?search_query=";
-//    String parameters;
 
     public List<Paper> paperResponse(String parameters) throws IOException, InterruptedException {
         String resultingUrl = baseUrl + parameters;
         System.out.println(resultingUrl);
-        URL searchUrl = new URL(resultingUrl);
 
-        BufferedReader br = null;
-        StringBuilder str = new StringBuilder();
         HttpClient httpClient = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
 
         HttpRequest httpRequest = HttpRequest.newBuilder().uri(URI.create(resultingUrl)).timeout(Duration.ofSeconds(10)).GET().build();
@@ -48,12 +44,10 @@ public class ArxivClient {
                 resultingPapers.add(parsePaper(paperAsString));
             }
 
-//            return paperCollector(StringToListConverter(response.body()));
             return resultingPapers;
         }
         catch (IOException e) {
             Thread.currentThread().interrupt();
-//            httpClient.close();
             throw new RuntimeException("Failed to get response!", e);
         }
     }
