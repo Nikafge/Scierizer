@@ -3,9 +3,11 @@ package org.example.summarizer.viewmodel;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 import org.example.summarizer.domain.Paper;
 import org.example.summarizer.service.PaperSearchService;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -28,27 +30,41 @@ public class MainViewModel {
     public void search() {
         String query = searchQuery.get();
 
-        if (query.isEmpty() || query == null) {
+        if (query == null || query.isEmpty()) {
             errorMessage.set("Type something to search");
             papers.clear();
             return;
         }
-        if (chosenCategory.isNull().get() || chosenCategory == null) {
+        if (chosenCategory.isNull().get()) {
             errorMessage.set("Select a category");
             papers.clear();
             return;
         }
+
+        // new logic for async search using task
         loading.set(true);
-        try {
+        errorMessage.set("");
 
-            errorMessage.set("");
-            List<Paper> foundPapers = paperSearchService.search(query, chosenCategory.get());
-            papers.setAll(foundPapers.stream().map(paper -> new PaperViewModel(paper)).toList());
+        Task<List<Paper>> task = new Task<>() {
+            @Override
+            protected List<Paper> call() throws IOException, InterruptedException {
+                return paperSearchService.search(query, chosenCategory.get());
+            }
+        };
 
-        } catch (Exception e) {
-            errorMessage.set("Something went wrong");
-        }
-        loading.set(false);
+        task.setOnSucceeded(event -> {
+            papers.setAll(task.getValue().stream().map(PaperViewModel::new).toList());
+            loading.set(false);
+        });
+
+        task.setOnFailed(event -> {
+            errorMessage.set("Could not load papers from arXiv");
+            loading.set(false);
+        });
+        Thread thread = new Thread(task);
+        thread.setDaemon(true);
+        thread.start();
+
 
     }
 
