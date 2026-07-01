@@ -81,12 +81,12 @@
                   <Font size="10.0" />
                </font>
             </ToggleButton>
-            <ToggleButton fx:id="quantitativeFinance" layoutX="329.0" layoutY="157.0" mnemonicParsing="false" prefHeight="21.0" prefWidth="79.0" text="Quant. finance">
+            <ToggleButton fx:id="quantitativeFinanceButton" layoutX="329.0" layoutY="157.0" mnemonicParsing="false" prefHeight="21.0" prefWidth="79.0" text="Quant. finance">
                <font>
                   <Font size="10.0" />
                </font>
             </ToggleButton>
-            <ToggleButton fx:id="engineering" layoutX="412.0" layoutY="158.0" mnemonicParsing="false" prefHeight="21.0" prefWidth="77.0" text="Engineering">
+            <ToggleButton fx:id="engineeringButton" layoutX="412.0" layoutY="158.0" mnemonicParsing="false" prefHeight="21.0" prefWidth="77.0" text="Engineering">
                <font>
                   <Font size="10.0" />
                </font>
@@ -96,17 +96,17 @@
                   <Font size="10.0" />
                </font>
             </ToggleButton>
-            <ToggleButton fx:id="quantitativeBiology" layoutX="246.0" layoutY="181.0" mnemonicParsing="false" text="Quant. biology">
+            <ToggleButton fx:id="quantitativeBiologyButton" layoutX="246.0" layoutY="181.0" mnemonicParsing="false" text="Quant. biology">
                <font>
                   <Font size="10.0" />
                </font>
             </ToggleButton>
-            <ToggleButton fx:id="statistics" layoutX="329.0" layoutY="181.0" mnemonicParsing="false" prefHeight="21.0" prefWidth="79.0" text="Statistics">
+            <ToggleButton fx:id="statisticsButton" layoutX="329.0" layoutY="181.0" mnemonicParsing="false" prefHeight="21.0" prefWidth="79.0" text="Statistics">
                <font>
                   <Font size="10.0" />
                </font>
             </ToggleButton>
-            <ToggleButton fx:id="economics" layoutX="412.0" layoutY="181.0" mnemonicParsing="false" prefHeight="21.0" prefWidth="77.0" text="Economics">
+            <ToggleButton fx:id="economicsButton" layoutX="412.0" layoutY="181.0" mnemonicParsing="false" prefHeight="21.0" prefWidth="77.0" text="Economics">
                <font>
                   <Font size="10.0" />
                </font>

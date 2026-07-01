@@ -4,30 +4,32 @@ import org.example.summarizer.domain.Paper;
 import org.example.summarizer.infrastructure.arxiv.ArxivClient;
 import org.example.summarizer.viewmodel.Category;
 
-import java.time.LocalDate;
+import java.io.IOException;
 import java.util.List;
 
-//Temporary solution for development
+//Search service to link ViewModel to Logic
 public class PaperSearchService {
 
     private final ArxivClient arxivClient;
-    private final String baseUrl = "https://export.arxiv.org/api/query?search_query=";
-
 
     public PaperSearchService(ArxivClient arxivClient) {
         this.arxivClient = arxivClient;
     }
 
+    public String urlRequestBuilder(String query, Category category) {
+        if (category == null) {
+            return "all:" + query;
+        }
+        return "all:" + query + "+AND+cat:" + category.getDisplayName() + ".*";
+    }
 
 
-    public List<Paper> search(String query, Category category) {
+
+    public List<Paper> search(String query, Category category) throws IOException, InterruptedException {
         if (query == null && category == null) {
             throw new IllegalArgumentException("Both query and category cannot be empty!");
         }
-
-        
-
-        String parameters = ;
+        String parameters = urlRequestBuilder(query, category);
         return arxivClient.paperResponse(parameters);
     }
 }

@@ -2,11 +2,14 @@ package org.example.summarizer.view;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import org.example.summarizer.domain.Paper;
 import org.example.summarizer.viewmodel.Category;
 import org.example.summarizer.viewmodel.MainViewModel;
 import org.example.summarizer.viewmodel.PaperViewModel;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class MainViewController {
 
@@ -33,39 +36,43 @@ public class MainViewController {
     @FXML
     private ToggleButton compSciButton;
     @FXML
-    private ToggleButton quantitativeBiology;
+    private ToggleButton quantitativeBiologyButton;
     @FXML
-    private ToggleButton quantitativeFinance;
+    private ToggleButton quantitativeFinanceButton;
     @FXML
-    private ToggleButton statistics;
+    private ToggleButton statisticsButton;
     @FXML
-    private ToggleButton engineering;
+    private ToggleButton engineeringButton;
     @FXML
-    private ToggleButton economics;
+    private ToggleButton economicsButton;
 
 
 
     public void setViewModel (MainViewModel mainViewModel) {
 
         this.mainViewModel = mainViewModel;
+        configurePaperResultsView();
         initializeCategoryButtons();    //initialize categories
         bindViewModel();                //fields binding
     }
 
 
     private void initializeCategoryButtons() {
-        List<ToggleButton> categoryButtons = List.of(physicsButton, mathButton, compSciButton,
-                quantitativeFinance, quantitativeBiology, statistics, engineering, economics);
-        categoryButtons.forEach(button -> button.setToggleGroup(toggleGroup));
+        Map<ToggleButton, Category> map = Map.of(
+                physicsButton, Category.PHYSICS,
+                mathButton, Category.MATHEMATICS,
+                compSciButton, Category.COMPUTER_SCIENCE,
+                quantitativeBiologyButton, Category.QUANTITATIVE_BIOLOGY,
+                quantitativeFinanceButton, Category.QUANTITATIVE_FINANCE,
+                statisticsButton, Category.STATISTICS,
+                engineeringButton, Category.ENGINEERING,
+                economicsButton, Category.ECONOMICS
+        );
 
-        physicsButton.setUserData(Category.Physics);
-        mathButton.setUserData(Category.Mathematics);
-        compSciButton.setUserData(Category.Computer_Science);
-        quantitativeFinance.setUserData(Category.Quantitative_Finance);
-        quantitativeBiology.setUserData(Category.Quantitative_Biology);
-        statistics.setUserData(Category.Statistics);
-        engineering.setUserData(Category.Engineering);
-        economics.setUserData(Category.Economics);
+        map.forEach((button, category) -> {
+                    button.setToggleGroup(toggleGroup);
+                    button.setUserData(category);
+                });
 
     }
 
@@ -87,6 +94,21 @@ public class MainViewController {
                     Category chosenCategory = (Category)newToggle.getUserData();
                     mainViewModel.chosenCategoryProperty().set(chosenCategory);
         });
-
     }
+
+    private void configurePaperResultsView() {
+        paperResultsListView.setCellFactory(lv -> new ListCell<PaperViewModel>() {
+            @Override
+            protected void updateItem(PaperViewModel paper, boolean empty) {
+                super.updateItem(paper, empty);
+                if (empty || paper == null) {
+                    setText(null);
+                } else {
+                    setText(paper.getPaper().title());
+                }
+            }
+
+        });
+    }
+
 }
