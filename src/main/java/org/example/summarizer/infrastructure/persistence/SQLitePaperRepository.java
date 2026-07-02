@@ -1,4 +1,107 @@
 package org.example.summarizer.infrastructure.persistence;
 
-public class SQLitePaperRepository {
+import org.example.summarizer.domain.LocalDateTransformer;
+import org.example.summarizer.domain.Paper;
+import org.example.summarizer.repository.PaperRepository;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.*;
+
+public class SQLitePaperRepository implements PaperRepository {
+
+    private final DBInitializer dbInitializer;
+
+    public SQLitePaperRepository(DBInitializer dbInitializer) {
+        this.dbInitializer = dbInitializer;
+    }
+
+    @Override
+    public void save(Paper paper) {
+        String sqlRequest = """
+                INSERT INTO paper (id, title, pdf_link, authors, date_published, date_updated, abstract)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(id) DO UPDATE SET
+                title = excluded.title,
+                pdf_link = excluded.pdf_link,
+                authors = excluded.authors,
+                date_published = excluded.date_published,
+                date_updated = excluded.date_updated,
+                abstract = excluded.abstract
+                """;
+
+        try(Connection connection = dbInitializer.getConnection();
+            PreparedStatement statement = connection.prepareStatement(sqlRequest)) {
+
+            statement.setInt(1, paper.id());
+            statement.setString(2, paper.title());
+            statement.setString(3, paper.pdfLink());
+            statement.setString(4, paper.authors());
+            statement.setString(5, LocalDateTransformer.convertToString(paper.datePublished()));
+            statement.setString(6, LocalDateTransformer.convertToString(paper.dateUpdated()));
+            statement.setString(7, paper.abstractText());
+            statement.executeUpdate();
+
+
+        } catch(SQLException e) {
+            throw new RuntimeException("Could not save to database", e);
+        }
+    }
+
+    @Override
+    public Optional<Paper> findById(int id) {
+        String sqlRequest = """
+                SELECT id, title, pdf_link, authors, date_published, date_updated, abstract
+                FROM paper
+                WHERE id = ?
+                """;
+        try (Connection connection = dbInitializer.getConnection();
+        PreparedStatement statement = connection.prepareStatement(sqlRequest)) {
+
+            statement.setInt(1, id);
+            try (ResultSet resultSet = statement.executeQuery()){
+                if (!resultSet.next()) {
+                    return Optional.empty();
+                }
+                return Optional.of(mapToPaper(resultSet));
+            }
+        } catch(SQLException e) {
+            throw new RuntimeException("Could not find saved paper in database", e);
+        }
+    }
+
+    @Override
+    public List<Paper> findAll() {
+        String sqlRequest = """
+                SELECT id, title, pdf_link, authors, date_published, date_updated, abstract
+                FROM paper
+                """;
+        try (Connection connection = dbInitializer.getConnection();
+            PreparedStatement statement = connection.prepareStatement(sqlRequest);
+            ResultSet resultSet = statement.executeQuery();
+        ) {
+            List<Paper> papers = new ArrayList<>();
+            while(resultSet.next()) {
+                papers.add(mapToPaper(resultSet));
+            }
+            return papers;
+        } catch (SQLException e) {
+            throw new RuntimeException("Could not load saved papers", e);
+        }
+    }
+
+    private Paper mapToPaper(ResultSet resultSet) throws SQLException {
+        return new Paper(
+                resultSet.getString("title"),
+                resultSet.getInt("id"),
+                resultSet.getString("abstractText"),
+                LocalDateTransformer.convertToLocalDate(resultSet.getString("date_published")),
+                LocalDateTransformer.convertToLocalDate(resultSet.getString("date_updated")),
+                resultSet.getString("authors"),
+                resultSet.getString("pdf_link")
+                );
+    }
+
 }

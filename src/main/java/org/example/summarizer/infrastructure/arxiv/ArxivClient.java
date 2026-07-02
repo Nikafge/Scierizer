@@ -123,6 +123,6 @@ public class ArxivClient {
         }
 
         //TO DO - replace the hardcoded zero!!!
-        return new Paper(title, String.valueOf(0), summary, LocalDate.parse(publishedAt), LocalDate.parse(updatedAt), authors, pdfLink);
+        return new Paper(title, 0, summary, LocalDate.parse(publishedAt), LocalDate.parse(updatedAt), authors, pdfLink);
     }
 }

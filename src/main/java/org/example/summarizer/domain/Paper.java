@@ -4,7 +4,7 @@ import java.time.LocalDate;
 
 public record Paper (
         String title,
-        String id,
+        int id,
         String abstractText,
         LocalDate datePublished,
         LocalDate dateUpdated,
@@ -20,5 +20,3 @@ public record Paper (
         }
     }
 }
-
-

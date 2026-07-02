@@ -6,19 +6,23 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 import org.example.summarizer.infrastructure.arxiv.ArxivClient;
+import org.example.summarizer.infrastructure.persistence.DBInitializer;
 import org.example.summarizer.service.PaperSearchService;
 import org.example.summarizer.view.MainViewController;
 import org.example.summarizer.viewmodel.MainViewModel;
 
 import java.io.IOException;
+import java.sql.SQLException;
 
 public class HelloApplication extends Application {
     @Override
-    public void start(Stage stage) throws IOException {
+    public void start(Stage stage) throws IOException, SQLException {
 
         FXMLLoader fxmlLoader = new FXMLLoader(HelloApplication.class.getResource("Main.fxml"));
         Parent root = fxmlLoader.load();
 
+        DBInitializer dbInitializer = new DBInitializer();
+        dbInitializer.initialize();
         ArxivClient arxivClient = new ArxivClient();
         PaperSearchService paperSearchService = new PaperSearchService(arxivClient);
         MainViewModel mainViewModel = new MainViewModel(paperSearchService);
