@@ -3,13 +3,16 @@ package org.example.summarizer.infrastructure.pdf;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
+import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
+import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 class TextExtractorTest {
 
@@ -23,7 +26,7 @@ class TextExtractorTest {
 
             try (PDPageContentStream contentStream = new PDPageContentStream(document, page)) {
                 contentStream.beginText();
-                contentStream.setFont(PDType1Font.HELVETICA, 12);
+                contentStream.setFont(new PDType1Font(Standard14Fonts.FontName.COURIER), 12);
                 contentStream.newLineAtOffset(72, 720);
                 contentStream.showText("Hello PDF");
                 contentStream.endText();
@@ -34,8 +37,11 @@ class TextExtractorTest {
         }
 
         TextExtractor textExtractor = new TextExtractor();
-        String extractedText = textExtractor.extractFromStream(new ByteArrayInputStream(pdfBytes));
 
-        assertEquals("Hello PDF", extractedText);
+
+        Optional<String> extractedText = textExtractor.extractFromStream(new ByteArrayInputStream(pdfBytes));
+
+        assertTrue(extractedText.isPresent());
+        assertEquals("Hello PDF", extractedText.get());
     }
 }

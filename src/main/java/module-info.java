@@ -6,6 +6,7 @@ module org.example.summarizer {
     requires org.kordamp.bootstrapfx.core;
     requires java.net.http;
     requires org.apache.pdfbox;
+    requires org.apache.pdfbox.io;
 
     opens org.example.summarizer.view to javafx.fxml;
     exports org.example.summarizer;
