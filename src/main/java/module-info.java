@@ -5,6 +5,7 @@ module org.example.summarizer {
     requires org.xerial.sqlitejdbc;
     requires org.kordamp.bootstrapfx.core;
     requires java.net.http;
+    requires org.apache.pdfbox;
 
     opens org.example.summarizer.view to javafx.fxml;
     exports org.example.summarizer;

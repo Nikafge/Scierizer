@@ -27,7 +27,7 @@ public class DBInitializer {
 
     public Connection getConnection() throws SQLException {
         try {
-            return DriverManager.getConnection("jdbc:sqlite" + getDbPath().toString());
+            return DriverManager.getConnection("jdbc:sqlite:" + getDbPath().toString());
         } catch (SQLException e) {
             throw new RuntimeException("Could not connect to database", e);
         }
@@ -59,14 +59,11 @@ public class DBInitializer {
                     pdf_link TEXT,
                     title TEXT,
                     authors TEXT,
-                    date_published TEXT,
+                    date_published TEXT
                 )
             """);
         } catch (SQLException e) {
             throw new RuntimeException("Could not initialize database", e);
         }
     }
-
-
-
 }
