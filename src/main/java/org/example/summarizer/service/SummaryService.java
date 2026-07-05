@@ -1,5 +1,6 @@
 package org.example.summarizer.service;
 
+import org.example.summarizer.infrastructure.ollama.OllamaClient;
 import org.example.summarizer.infrastructure.pdf.TextExtractor;
 
 import java.io.IOException;
@@ -8,13 +9,15 @@ import java.util.Optional;
 
 public class SummaryService {
     private final TextExtractor textExtractor;
+    private final OllamaClient ollamaClient;
 
-    public SummaryService(TextExtractor textExtractor) {
+    public SummaryService(TextExtractor textExtractor, OllamaClient ollamaClient) {
         this.textExtractor = textExtractor;
+        this.ollamaClient = ollamaClient;
     }
 
     public boolean isNotTooLong(String content) {
-        if (content.length() < 30000) {
+        if (content.length() < 12000) {
             return true;
         }
         return false;
