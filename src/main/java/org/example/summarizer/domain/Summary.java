@@ -8,6 +8,6 @@ public record Summary(
         String title,
         String authors,
         String summary,
-        LocalDate date_published,
-        String pdf_link
+        LocalDate datePublished,
+        String pdfLink
 ) {}

@@ -96,7 +96,7 @@ public class SQLitePaperRepository implements PaperRepository {
         return new Paper(
                 resultSet.getString("title"),
                 resultSet.getInt("id"),
-                resultSet.getString("abstractText"),
+                resultSet.getString("abstract"),
                 LocalDateTransformer.convertToLocalDate(resultSet.getString("date_published")),
                 LocalDateTransformer.convertToLocalDate(resultSet.getString("date_updated")),
                 resultSet.getString("authors"),

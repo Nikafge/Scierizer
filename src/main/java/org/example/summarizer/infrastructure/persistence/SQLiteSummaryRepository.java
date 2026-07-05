@@ -18,27 +18,27 @@ public class SQLiteSummaryRepository implements SummaryRepository {
         this.dbInitializer = dbInitializer;
     }
 
-    public void save(Summary summary) throws SQLException {
+    public void save(Summary summary) {
         String sqlRequest = """
                 INSERT INTO summary (id, summary, pdf_link, title, authors, date_published)
                 VALUES (?, ?, ?, ?, ?, ?)
                 ON CONFLICT(id) DO UPDATE SET
                 summary = excluded.summary,
-                excluded.pdf_link,
-                excluded.title,
-                excluded.authors,
-                excluded.date_published
-                
+                pdf_link = excluded.pdf_link,
+                title = excluded.title,
+                authors = excluded.authors,
+                date_published = excluded.date_published
                 """;
 
         try (Connection connection = dbInitializer.getConnection();
         PreparedStatement statement = connection.prepareStatement(sqlRequest)) {
             statement.setInt(1, summary.id());
             statement.setString(2, summary.summary());
-            statement.setString(3, summary.pdf_link());
+            statement.setString(3, summary.pdfLink());
             statement.setString(4, summary.title());
             statement.setString(5, summary.authors());
-            statement.setString(6, LocalDateTransformer.convertToString(summary.date_published()));
+            statement.setString(6, LocalDateTransformer.convertToString(summary.datePublished()));
+            statement.executeUpdate();
         } catch (SQLException e) {
             throw new RuntimeException("Could not save summary", e);
         }
