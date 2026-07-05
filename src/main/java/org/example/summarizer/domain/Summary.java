@@ -4,10 +4,10 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 public record Summary(
-        long id,
+        int id,
         String title,
         String authors,
         String summary,
-        LocalDate publishedAt,
+        LocalDate date_published,
         String pdf_link
 ) {}
