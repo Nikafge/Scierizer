@@ -71,6 +71,7 @@ public class SQLiteSummaryRepository implements SummaryRepository {
         String sqlRequest = """
                 SELECT id, summary, pdf_link, title, authors, date_published
                 FROM summary
+                ORDER BY id
                 """;
         try (Connection connection = dbInitializer.getConnection();
         PreparedStatement statement = connection.prepareStatement(sqlRequest);

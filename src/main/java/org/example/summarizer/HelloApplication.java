@@ -12,6 +12,7 @@ import org.example.summarizer.view.MainViewController;
 import org.example.summarizer.viewmodel.MainViewModel;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.sql.SQLException;
 
 public class HelloApplication extends Application {
@@ -21,7 +22,7 @@ public class HelloApplication extends Application {
         FXMLLoader fxmlLoader = new FXMLLoader(HelloApplication.class.getResource("Main.fxml"));
         Parent root = fxmlLoader.load();
 
-        DBInitializer dbInitializer = new DBInitializer();
+        DBInitializer dbInitializer = new DBInitializer(Path.of(System.getProperty("user.home"), ".summarizer"));
         dbInitializer.initialize();
         ArxivClient arxivClient = new ArxivClient();
         PaperSearchService paperSearchService = new PaperSearchService(arxivClient);

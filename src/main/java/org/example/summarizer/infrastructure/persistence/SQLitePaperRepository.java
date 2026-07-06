@@ -77,6 +77,7 @@ public class SQLitePaperRepository implements PaperRepository {
         String sqlRequest = """
                 SELECT id, title, pdf_link, authors, date_published, date_updated, abstract
                 FROM paper
+                ORDER BY id
                 """;
         try (Connection connection = dbInitializer.getConnection();
             PreparedStatement statement = connection.prepareStatement(sqlRequest);

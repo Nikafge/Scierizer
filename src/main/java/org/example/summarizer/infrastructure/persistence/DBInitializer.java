@@ -10,35 +10,37 @@ import java.sql.Statement;
 
 public class DBInitializer {
 
-    private String dbUrl;
+    private final Path appDbPath;
 
-    public Path getDbPath() {
-        Path appDbPath = Path.of(
-                System.getProperty("user.home"), ".summarizer"
-        );
+    public DBInitializer(Path appDbPath) {
+        this.appDbPath = appDbPath;
+        createDirectory();
+    }
 
+    public void createDirectory() {
         try {
             Files.createDirectories(appDbPath);
         } catch (IOException e) {
             throw new RuntimeException("Could not create new folder", e);
         }
-        return appDbPath.resolve("db.db");
     }
 
-    public Connection getConnection() throws SQLException {
+    public Connection getConnection() {
         try {
-            return DriverManager.getConnection("jdbc:sqlite:" + getDbPath().toString());
+            return DriverManager.getConnection("jdbc:sqlite:" + appDbPath.resolve("db.db").toString());
         } catch (SQLException e) {
             throw new RuntimeException("Could not connect to database", e);
         }
     }
-    private void enableForeignKeys(Connection connection) throws SQLException{
-        try (Statement statement = connection.createStatement()){
-            statement.execute("PRAGMA foreign_keys = ON");
-        }
-    }
 
-    public void initialize() throws SQLException {
+    //Enable this method once DB need foreign keys for tables
+//    private void enableForeignKeys(Connection connection) throws SQLException{
+//        try (Statement statement = connection.createStatement()){
+//            statement.execute("PRAGMA foreign_keys = ON");
+//        }
+//    }
+
+    public void initialize() {
         try (Connection connection = getConnection(); Statement statement = connection.createStatement()) {
             statement.execute("""
                 CREATE TABLE IF NOT EXISTS paper (
