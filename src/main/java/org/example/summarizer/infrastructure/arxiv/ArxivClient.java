@@ -34,7 +34,7 @@ public class ArxivClient {
             }
 
 
-            //Make that shi
+            //Parse response as list of strings, write them in a separate list as Papers
             List<String> papersAsStrings = StringToListConverter(response.body());
             List<Paper> resultingPapers = new ArrayList<>();
 
@@ -75,7 +75,7 @@ public class ArxivClient {
         return null;
     }
 
-    // Extracts metadata from API response
+    // Extracts metadata from API response for a single Paper
     public Paper parsePaper(String paperInfo) {
 
         //title and summary
@@ -123,6 +123,6 @@ public class ArxivClient {
         }
 
         //TO DO - replace the hardcoded zero!!!
-        return new Paper(title, String.valueOf(0), summary, LocalDate.parse(publishedAt), LocalDate.parse(updatedAt), authors, pdfLink);
+        return new Paper(title, 0, summary, LocalDate.parse(publishedAt), LocalDate.parse(updatedAt), authors, pdfLink);
     }
 }

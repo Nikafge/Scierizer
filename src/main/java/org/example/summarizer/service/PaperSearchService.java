@@ -29,7 +29,8 @@ public class PaperSearchService {
         if (query == null && category == null) {
             throw new IllegalArgumentException("Both query and category cannot be empty!");
         }
-        String parameters = urlRequestBuilder(query, category);
+        String encodeQuery = query.replace(" ", "+");
+        String parameters = urlRequestBuilder(encodeQuery, category);
         return arxivClient.paperResponse(parameters);
     }
 }
