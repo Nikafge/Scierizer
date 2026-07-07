@@ -16,6 +16,7 @@ public class OllamaClient {
     //TODO Make this part.
 
     String buildSimpleRequest(SummaryType summaryType) {
+        //Replace placeholders with real text
         String basicRequset = "You are summarizing a scientific paper. Follow these rules strictly:\n" +
                 "- Use ONLY information explicitly present in the provided text. Do not add facts from general knowledge.\n" +
                 "- Every number, unit, and formula you mention must appear in the source text exactly as stated. Do not round, approximate, or substitute one figure for another.\n" +
@@ -81,9 +82,9 @@ public class OllamaClient {
     }
 
     String buildHardRequest(int number, SummaryType summaryType) {
-        String basicRequest;
-        String reducePrompt;
-        String mapRequest;
+        //Replace {text} with real matching data
+        String reducePrompt = "";
+        String mapRequest = "";
 
         switch (summaryType) {
             case TLDR:
@@ -164,7 +165,7 @@ public class OllamaClient {
 
         }
 
-        return null;
+        return mapRequest + reducePrompt;
     }
 
 
@@ -179,8 +180,6 @@ public class OllamaClient {
 
         HttpClient httpClient = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
         HttpRequest httpRequest = HttpRequest.newBuilder().uri(URI.create(baseUrl)).build();
-
-
 
         return null;
     }
