@@ -31,10 +31,9 @@ public class SummaryService {
         } else {
             content = textExtractor.extractFromPath(Path.of(url));
         }
+
+
         return content.orElse("Chosen paper was empty!");
     }
-
-
-
 
 }
