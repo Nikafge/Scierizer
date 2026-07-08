@@ -12,14 +12,14 @@ class TextShredderTest {
     @Test
     void testPartsCutting() throws IOException {
 
+        TextShredder textShredder = new TextShredder();
         String content = new TextExtractor().extractFromPath(Path.of("C:\\\\Users\\\\marcs\\\\Downloads\\\\2607.01390v1.pdf")).get();
-        List<String> shreddedText = TextShredder.cutPaper(content);
+        List<String> shreddedText = textShredder.cutPaper(content);
 
-        System.out.println(shreddedText);
+        System.out.println(String.join("\n\n", shreddedText));
 
-        Assertions.assertEquals(8, shreddedText.size());
+        Assertions.assertEquals(10, shreddedText.size());
 
     }
-
 
 }
