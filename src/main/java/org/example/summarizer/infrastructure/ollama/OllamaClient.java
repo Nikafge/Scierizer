@@ -30,22 +30,13 @@ public class OllamaClient {
 private record OllamaGenerateResponse(
         String response,
         boolean done
-) {
-}
-
-
-
-//    private record ollamaGenerateResponse(
-//            String response,
-//            boolean done
-//    ) {}
+) {}
     private final String basicRequest = "You are summarizing a scientific paper. Follow these rules strictly:\n" +
             "- Use ONLY information explicitly present in the provided text. Do not add facts from general knowledge.\n" +
-            "- Every number, unit, and formula you mention must appear in the source text exactly as stated. Do not round, approximate, or substitute one figure for another.\n" +
+            "- Do NOT try to include formulas from paper. Only describe them\n" +
             "- If a number is associated with a specific claim or measurement in the text, keep that exact association — do not attach a number to a different claim than the one it originally supports.\n" +
             "- If information needed to answer is not present in the text, state that explicitly rather than inferring or guessing.\n" +
             "- Do not use LaTeX formatting in your output; describe formulas and symbols in plain words.";
-//    private static final String MODEL = "gemma4:e4b";
     private static final String MODEL = "gemma4:e4b";
 
     //Comment these three lines (37-39) and uncomment lines 41-54 for testing!
@@ -97,14 +88,8 @@ private record OllamaGenerateResponse(
                     objectMapper.readValue(httpResponse.body(), OllamaGenerateResponse.class);
 
             return ollamaResponse.response().trim();
-//        } catch (IOException | InterruptedException e) {
-//            throw new RuntimeException("Failed to establish connection with Ollama");
-//        }
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new RuntimeException("Ollama request was interrupted", e);
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to communicate with Ollama", e);
+        } catch (IOException | InterruptedException e) {
+            throw new RuntimeException("Failed to establish connection with Ollama");
         }
     }
 
@@ -235,8 +220,6 @@ private record OllamaGenerateResponse(
 
                 for (int i = 1; i <= paperChapters.size(); i++) {
                     chunks.add(getOllamaResponse((mapRequest.replace("{chunk_number}", String.valueOf(i))).replace("{chunk_text}", paperChapters.get(i-1))));
-//                    chunks.add(getOllamaResponse(basicRequest + (mapRequest.replace("{chunk_number}", String.valueOf(i))).replace("{chunk_text}", paperChapters.get(i-1))));
-
                 }
 
         return chunks;

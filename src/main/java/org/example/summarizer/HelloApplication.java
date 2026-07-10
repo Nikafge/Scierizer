@@ -7,8 +7,12 @@ import javafx.scene.Scene;
 import javafx.stage.Stage;
 import org.example.summarizer.domain.Paper;
 import org.example.summarizer.infrastructure.arxiv.ArxivClient;
+import org.example.summarizer.infrastructure.ollama.OllamaClient;
+import org.example.summarizer.infrastructure.pdf.TextExtractor;
+import org.example.summarizer.infrastructure.pdf.TextShredder;
 import org.example.summarizer.infrastructure.persistence.DBInitializer;
 import org.example.summarizer.service.PaperSearchService;
+import org.example.summarizer.service.SummaryService;
 import org.example.summarizer.view.MainViewController;
 import org.example.summarizer.view.PaperDetailViewController;
 import org.example.summarizer.viewmodel.MainViewModel;
@@ -22,19 +26,15 @@ public class HelloApplication extends Application {
     private Stage primaryStage;
     ArxivClient arxivClient = new ArxivClient();
     PaperSearchService paperSearchService = new PaperSearchService(arxivClient);
-
+    SummaryService summaryService = new SummaryService(new TextExtractor(), new OllamaClient(), new TextShredder());
+    DBInitializer dbInitializer = new DBInitializer(Path.of(System.getProperty("user.home"), ".summarizer"));
 
     @Override
     public void start(Stage stage) throws IOException, SQLException {
         primaryStage = stage;
-
-        //Initialize dependencies
-        DBInitializer dbInitializer = new DBInitializer(Path.of(System.getProperty("user.home"), ".summarizer"));
         dbInitializer.initialize();
+        //Initialize dependencies
 
-
-//        Scene scene = new Scene(root);
-//        stage.setScene(scene);
 
         showMainView();
         primaryStage.setTitle("Arxiv Summarizer");
@@ -63,7 +63,7 @@ public class HelloApplication extends Application {
 
         Parent root = fxmlLoader.load();
 
-        PaperDetailsViewModel viewModel = new PaperDetailsViewModel(paper);
+        PaperDetailsViewModel viewModel = new PaperDetailsViewModel(paper, summaryService, dbInitializer);
 
         PaperDetailViewController controller = fxmlLoader.getController();
         controller.setPaperDetailViewModel(viewModel);

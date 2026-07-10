@@ -3,14 +3,18 @@ package org.example.summarizer.view;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import org.example.summarizer.viewmodel.PaperDetailsViewModel;
-import org.example.summarizer.viewmodel.PaperViewModel;
+import org.example.summarizer.viewmodel.SummaryType;
 
 public class PaperDetailViewController {
 
     private PaperDetailsViewModel paperDetailsViewModel;
+    private final ToggleGroup toggleGroup = new ToggleGroup();
 
+    //Navigation
     @FXML
     private Button backButton;
+
+    //Paper metadata
     @FXML
     private Label titleLabel;
     @FXML
@@ -22,10 +26,9 @@ public class PaperDetailViewController {
     @FXML
     private TextField sourceField;
     @FXML
-    private Button savePaperButton;
-    @FXML
     private TextArea abstractArea;
 
+    //Summary controls
     @FXML
     private ToggleButton structured;
     @FXML
@@ -34,23 +37,125 @@ public class PaperDetailViewController {
     private ToggleButton executive;
     @FXML
     private ToggleButton research;
+    @FXML
+    private Label errorLabel;
 
+    //Summaries
+    @FXML
+    private TextArea generatedSummary;
+
+    //Action elements
+    @FXML
+    private Button savePaperButton;
     @FXML
     private Button generateSummaryButton;
     @FXML
-    private TextArea generatedSummary;
-    @FXML
     private Button saveSummary;
+    @FXML
+    private ProgressIndicator progressIndicator;
 
+    @FXML
+    private void initialize() {
+        //configure staff
+        configureReadOnlyFields();
+        configureSummaryTypes();
+    }
 
+    private void configureSummaryTypes() {
+        structured.setToggleGroup(toggleGroup);
+        tldr.setToggleGroup(toggleGroup);
+        executive.setToggleGroup(toggleGroup);
+        research.setToggleGroup(toggleGroup);
+
+        structured.setUserData(SummaryType.STRUCTURED);
+        tldr.setUserData(SummaryType.TLDR);
+        executive.setUserData(SummaryType.EXECUTIVE);
+        research.setUserData(SummaryType.RESEARCH_NOTE);
+
+        tldr.setSelected(true);
+
+        toggleGroup.selectedToggleProperty().addListener((observable, oldToggle, newToggle) -> {
+            if (paperDetailsViewModel == null) {
+                return;
+            }
+            if (newToggle == null) {
+                paperDetailsViewModel.selectedSummaryTypeProperty().set(null);
+                return;
+            }
+            SummaryType selectedSummaryType = (SummaryType) newToggle.getUserData();
+            paperDetailsViewModel.selectedSummaryTypeProperty().set(selectedSummaryType);
+
+        });
+
+    }
+
+    private void configureReadOnlyFields() {
+        authorsField.setEditable(false);
+        publishedField.setEditable(false);
+        updatedField.setEditable(false);
+        sourceField.setEditable(false);
+        abstractArea.setEditable(false);
+        abstractArea.setWrapText(true);
+        generatedSummary.setEditable(false);
+        generatedSummary.setWrapText(true);
+    }
 
     public void setPaperDetailViewModel(PaperDetailsViewModel paperDetailsViewModel) {
         this.paperDetailsViewModel = paperDetailsViewModel;
         bindPaperViewModel();
     }
 
-    public void bindPaperViewModel() {
+    private void bindPaperViewModel() {
         titleLabel.textProperty().bind(paperDetailsViewModel.titleProperty());
+        authorsField.textProperty().bind(paperDetailsViewModel.authorsProperty());
+        publishedField.textProperty().bind(paperDetailsViewModel.publishedDateProperty());
+        updatedField.textProperty().bind(paperDetailsViewModel.updatedDateProperty());
+        sourceField.textProperty().bind(paperDetailsViewModel.pdfLinkProperty());
+        abstractArea.textProperty().bind(paperDetailsViewModel.abstractTextProperty());
+
+        generatedSummary.textProperty().bind(paperDetailsViewModel.generatedSummaryProperty());
+
+        generateSummaryButton.disableProperty().bind(
+                paperDetailsViewModel.isLoadingProperty()
+        );
+
+        saveSummary.disableProperty().bind(
+                paperDetailsViewModel.generatedSummaryProperty().isEmpty()
+                        .or(paperDetailsViewModel.isLoadingProperty())
+        );
+
+        progressIndicator.visibleProperty().bind(
+                paperDetailsViewModel.isLoadingProperty()
+        );
+
+        progressIndicator.managedProperty().bind(
+                progressIndicator.visibleProperty()
+        );
+
+        errorLabel.textProperty().bind(paperDetailsViewModel.errorMessageProperty());
+
+        errorLabel.visibleProperty().bind(
+                paperDetailsViewModel.errorMessageProperty().isNotEmpty()
+        );
+
+        errorLabel.managedProperty().bind(
+                errorLabel.visibleProperty()
+        );
+
+        generateSummaryButton.setOnAction(event -> paperDetailsViewModel.generateSummary());
+
+        savePaperButton.setOnAction(event -> paperDetailsViewModel.savePaper());
+
+        saveSummary.setOnAction(event -> paperDetailsViewModel.saveSummary());
+    }
+
+    private void syncSelectedSummaryTypeWithViewModel() {
+        Toggle selectedToggle = toggleGroup.getSelectedToggle();
+
+        if (selectedToggle != null) {
+            SummaryType selectedSummaryType = (SummaryType) selectedToggle.getUserData();
+            paperDetailsViewModel.selectedSummaryTypeProperty().set(selectedSummaryType);
+        }
     }
 
     public Button getBackButton() {

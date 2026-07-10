@@ -19,4 +19,7 @@ public record Paper (
             throw new IllegalArgumentException("Link cannot be null");
         }
     }
+    public Paper withId(Integer id) {
+        return new Paper(title, id, abstractText, datePublished, dateUpdated, authors, pdfLink);
+    }
 }
