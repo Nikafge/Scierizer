@@ -47,16 +47,18 @@
 
 <VBox prefHeight="400.0" prefWidth="640.0" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.example.summarizer.view.PaperDetailViewController">
    <children>
+<!--      <MenuBar prefHeight="25.0" prefWidth="640.0">-->
+<!--         <menus>-->
+<!--            <Menu mnemonicParsing="false" text="Home" />-->
+<!--            <Menu mnemonicParsing="false" text="Saved summaries" />-->
+<!--            <Menu mnemonicParsing="false" text="Favourite articles" />-->
+<!--            <Menu mnemonicParsing="false" text="Settings" />-->
+<!--         </menus>-->
+<!--      </MenuBar>-->
+      <fx:include fx:id="topNavigation"
+                  source="TopNavigation.fxml"/>
       <AnchorPane maxHeight="-1.0" maxWidth="-1.0" prefHeight="513.0" prefWidth="768.0" VBox.vgrow="ALWAYS">
          <children>
-            <MenuBar layoutY="2.0" prefHeight="25.0" prefWidth="640.0">
-               <menus>
-                  <Menu mnemonicParsing="false" text="Home" />
-                  <Menu mnemonicParsing="false" text="Saved summaries" />
-                  <Menu mnemonicParsing="false" text="Favourite articles" />
-                  <Menu mnemonicParsing="false" text="Settings" />
-               </menus>
-            </MenuBar>
             <Text layoutX="156.0" layoutY="83.0" strokeType="OUTSIDE" strokeWidth="0.0" text="General information" textAlignment="CENTER" wrappingWidth="320.1875">
                <font>
                   <Font size="10.0" />
