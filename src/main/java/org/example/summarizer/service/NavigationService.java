@@ -25,12 +25,13 @@ public class NavigationService {
         Parent root = fxmlLoader.load();
         MainViewController mainViewController = fxmlLoader.getController();
         mainViewController.setViewModel(mainViewModel);
+        mainViewController.setNavigationService(this);
 
         stage.setScene(new Scene(root));
-        stage.show();
+//        stage.show();
     }
 
-    public void showSavedContent(SavedContentType savedContentType, PaperDetailsViewModel paperDetailsViewModel) throws IOException {
+    public void showSavedContent(SavedContentType savedContentType) throws IOException {
 
         FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/org/example/summarizer/SavedContent.fxml"));
         Parent root = fxmlLoader.load();
@@ -55,7 +56,13 @@ public class NavigationService {
 //        stage.setScene(new Scene(root));
 //        stage.show();
 //    }
-    public void showSettings() {
+    public void showSettings(MainViewModel mainViewModel) throws IOException {
+        FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/org/example/summarizer/Main.fxml"));
+        Parent root = fxmlLoader.load();
+        MainViewController mainViewController = fxmlLoader.getController();
+        mainViewController.setViewModel(mainViewModel);
 
+        stage.setScene(new Scene(root));
+        stage.show();
     }
 }

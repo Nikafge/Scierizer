@@ -11,6 +11,7 @@ import org.example.summarizer.infrastructure.ollama.OllamaClient;
 import org.example.summarizer.infrastructure.pdf.TextExtractor;
 import org.example.summarizer.infrastructure.pdf.TextShredder;
 import org.example.summarizer.infrastructure.persistence.DBInitializer;
+import org.example.summarizer.service.NavigationService;
 import org.example.summarizer.service.PaperSearchService;
 import org.example.summarizer.service.SummaryService;
 import org.example.summarizer.view.MainViewController;
@@ -33,6 +34,7 @@ public class HelloApplication extends Application {
     public void start(Stage stage) throws IOException, SQLException {
         primaryStage = stage;
         dbInitializer.initialize();
+        NavigationService navigationService = new NavigationService(stage);
         //Initialize dependencies
 
 

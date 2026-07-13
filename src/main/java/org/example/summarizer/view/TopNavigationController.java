@@ -4,60 +4,79 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import org.example.summarizer.service.NavigationService;
 import org.example.summarizer.viewmodel.MainViewModel;
+import org.example.summarizer.viewmodel.PaperDetailsViewModel;
 import org.example.summarizer.viewmodel.SavedContentType;
 
 import java.io.IOException;
-//import org.example.summarizer.view.NavigationService;
-//import org.example.summarizer.view.SavedContentType;
 
-public class TopNavigationController {
+    public class TopNavigationController {
 
-    @FXML
-    private Button homeButton;
+        @FXML
+        private Button homeButton;
 
-    @FXML
-    private Button savedSummariesButton;
+        @FXML
+        private Button savedSummariesButton;
 
-    @FXML
-    private Button savedArticlesButton;
+        @FXML
+        private Button savedArticlesButton;
 
-    @FXML
-    private Button settingsButton;
+        @FXML
+        private Button settingsButton;
 
-    private NavigationService navigationService;
-    private final MainViewModel mainViewModel;
+        private NavigationService navigationService;
 
-    public TopNavigationController(MainViewModel mainViewModel) {
-        this.mainViewModel = mainViewModel;
-    }
+        public void setNavigationService(
+                NavigationService navigationService) {
 
-    public void setNavigationService(NavigationService navigationService) {
-        this.navigationService = navigationService;
+            this.navigationService = navigationService;
+            initialize();
+        }
 
-        homeButton.setOnAction(event ->
-                {
-                    try {
-                        navigationService.showHome(mainViewModel);
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
+        @FXML
+        public void initialize() {
+            homeButton.setOnAction(event ->
+                    {
+                        try {
+                            navigationService.showHome(mainViewModel);
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
                     }
-                }
-        );
+            );
 
-//        savedSummariesButton.setOnAction(event ->
-//                navigationService.showSavedContent(
-//                        SavedContentType.SUMMARIES
-//                )
-//        );
-//
-//        savedArticlesButton.setOnAction(event ->
-//                navigationService.showSavedPaper(
-//                        SavedContentType.ARTICLES, //Do dis
-//                )
-//        );
+            savedSummariesButton.setOnAction(event ->
+                    {
+                        try {
+                            navigationService.showSavedContent(
+                                    SavedContentType.SUMMARIES
+                            );
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+            );
 
-        settingsButton.setOnAction(event ->
-                navigationService.showSettings()
-        );
+            savedArticlesButton.setOnAction(event ->
+                    {
+                        try {
+                            navigationService.showSavedContent(
+                                    SavedContentType.ARTICLES
+                            );
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+            );
+            //Temporary solution
+            settingsButton.setOnAction(event ->
+                    {
+                        try {
+                            navigationService.showSettings(mainViewModel);
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+            );
+        }
+
     }
-}
