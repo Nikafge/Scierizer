@@ -3,8 +3,6 @@ package org.example.summarizer.view;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import org.example.summarizer.service.NavigationService;
-import org.example.summarizer.viewmodel.MainViewModel;
-import org.example.summarizer.viewmodel.PaperDetailsViewModel;
 import org.example.summarizer.viewmodel.SavedContentType;
 
 import java.io.IOException;
@@ -25,9 +23,7 @@ import java.io.IOException;
 
         private NavigationService navigationService;
 
-        public void setNavigationService(
-                NavigationService navigationService) {
-
+        public void setNavigationService(NavigationService navigationService) {
             this.navigationService = navigationService;
             initialize();
         }
@@ -37,7 +33,7 @@ import java.io.IOException;
             homeButton.setOnAction(event ->
                     {
                         try {
-                            navigationService.showHome(mainViewModel);
+                            navigationService.showHome();
                         } catch (IOException e) {
                             throw new RuntimeException(e);
                         }
@@ -67,11 +63,10 @@ import java.io.IOException;
                         }
                     }
             );
-            //Temporary solution
             settingsButton.setOnAction(event ->
                     {
                         try {
-                            navigationService.showSettings(mainViewModel);
+                            navigationService.showSettings();
                         } catch (IOException e) {
                             throw new RuntimeException(e);
                         }

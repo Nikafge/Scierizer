@@ -34,7 +34,6 @@ public class HelloApplication extends Application {
     public void start(Stage stage) throws IOException, SQLException {
         primaryStage = stage;
         dbInitializer.initialize();
-        NavigationService navigationService = new NavigationService(stage);
         //Initialize dependencies
 
 
@@ -48,8 +47,10 @@ public class HelloApplication extends Application {
         Parent root = fxmlLoader.load();
         MainViewModel mainViewModel = new MainViewModel(paperSearchService);
         MainViewController controller = fxmlLoader.getController();
+        NavigationService navigationService = new NavigationService(primaryStage, mainViewModel);
         controller.setViewModel(mainViewModel);
         controller.setOnPaperSelected(paper -> {
+
             try {
                 showPaperDetailsView(paper);
             } catch (IOException e) {
