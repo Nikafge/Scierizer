@@ -2,7 +2,7 @@ package org.example.summarizer.viewmodel;
 
 public enum SavedContentType {
     ARTICLES ("articles"),
-    SUMMARIES ("summaaries");
+    SUMMARIES ("summaries");
 
     private final String displayType;
 
