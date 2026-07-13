@@ -61,7 +61,8 @@ public class DBInitializer {
                     pdf_link TEXT,
                     title TEXT,
                     authors TEXT,
-                    date_published TEXT
+                    date_published TEXT,
+                    summary_type
                 )
             """);
         } catch (SQLException e) {

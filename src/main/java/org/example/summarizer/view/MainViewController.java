@@ -3,6 +3,7 @@ package org.example.summarizer.view;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import org.example.summarizer.domain.Paper;
+import org.example.summarizer.service.NavigationService;
 import org.example.summarizer.viewmodel.Category;
 import org.example.summarizer.viewmodel.MainViewModel;
 import org.example.summarizer.viewmodel.PaperViewModel;
@@ -10,12 +11,15 @@ import org.example.summarizer.viewmodel.PaperViewModel;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 public class MainViewController {
 
     private MainViewModel mainViewModel;
-
+    private NavigationService navigationService;
     private final ToggleGroup toggleGroup = new ToggleGroup();
+
+    private Consumer<Paper> onPaperSelected;
 
     @FXML
     private TextField searchField;
@@ -49,7 +53,6 @@ public class MainViewController {
 
 
     public void setViewModel (MainViewModel mainViewModel) {
-
         this.mainViewModel = mainViewModel;
         configurePaperResultsView();
         initializeCategoryButtons();    //initialize categories
@@ -94,6 +97,16 @@ public class MainViewController {
                     Category chosenCategory = (Category)newToggle.getUserData();
                     mainViewModel.chosenCategoryProperty().set(chosenCategory);
         });
+        paperResultsListView.setOnMouseClicked(event -> {
+            if (event.getClickCount() == 2) {
+                PaperViewModel selectedPaperViewModel =
+                        paperResultsListView.getSelectionModel().getSelectedItem();
+
+                if (selectedPaperViewModel != null && onPaperSelected != null) {
+                    onPaperSelected.accept(selectedPaperViewModel.getPaper());
+                }
+            }
+        });
     }
 
     private void configurePaperResultsView() {
@@ -109,6 +122,14 @@ public class MainViewController {
             }
 
         });
+    }
+
+    public void setNavigationService(NavigationService navigationService) {
+        this.navigationService = navigationService;
+    }
+
+    public void setOnPaperSelected(Consumer<Paper> onPaperSelected) {
+        this.onPaperSelected = onPaperSelected;
     }
 
 }

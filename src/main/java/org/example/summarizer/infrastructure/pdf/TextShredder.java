@@ -6,33 +6,39 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class TextShredder {
-    public static List<String> cutPaper(String content) {
+    public List<String> cutPaper(String content) {
         List<String> parts = new ArrayList<>();
+
+        //Look for Reference chapter and cut it out of the paper
+        Pattern refPattern = Pattern.compile("(?m)^(References?)\\s*$");
+        Matcher refMatcher = refPattern.matcher(content);
+        if (refMatcher.find()) {
+            content = content.substring(0, refMatcher.start()).trim();
+        }
+
         Pattern pattern = Pattern.compile("(?m)^(\\d+)\\.?\\s+([A-Za-z][A-Za-z\\s]*)$");
         Matcher matcher = pattern.matcher(content);
 
-        int index = -1;
+        int startIndex = -1;
 
         while (matcher.find()) {
-
-            if (index != -1) {
-                String sectionContent = content.substring(index, matcher.start()).trim();
+            if (startIndex != -1) {
+                String sectionContent = content.substring(startIndex, matcher.start()).trim();
 
                 if (!sectionContent.isEmpty()) {
                     parts.add(sectionContent);
                 }
             }
 
-            index = matcher.end();
+            startIndex = matcher.start();
         }
 
-        if (index != -1 && index < content.length()) {
-            String lastContent = content.substring(index).trim();
+        if (startIndex != -1 && startIndex < content.length()) {
+            String lastContent = content.substring(startIndex).trim();
             if (!lastContent.isEmpty()) {
                 parts.add(lastContent);
             }
         }
-
 
         return parts;
     }

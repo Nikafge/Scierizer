@@ -53,14 +53,16 @@
                   <Font size="10.0" />
                </font>
             </Button>
-            <MenuBar layoutY="2.0" prefHeight="25.0" prefWidth="640.0">
-              <menus>
-                <Menu mnemonicParsing="false" text="Home" />
-                <Menu mnemonicParsing="false" text="Saved summaries" />
-                <Menu mnemonicParsing="false" text="Favourite articles" />
-                  <Menu mnemonicParsing="false" text="Settings" />
-              </menus>
-            </MenuBar>
+<!--            <MenuBar layoutY="2.0" prefHeight="25.0" prefWidth="640.0">-->
+<!--              <menus>-->
+<!--                <Menu mnemonicParsing="false" text="Home" />-->
+<!--                <Menu mnemonicParsing="false" text="Saved summaries" />-->
+<!--                <Menu mnemonicParsing="false" text="Favourite articles" />-->
+<!--                  <Menu mnemonicParsing="false" text="Settings" />-->
+<!--              </menus>-->
+<!--            </MenuBar>-->
+          <fx:include fx:id="topNavigation"
+                      source="TopNavigation.fxml"/>
             <Text layoutX="172.0" layoutY="90.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Seacrh arXive papers" textAlignment="CENTER" wrappingWidth="320.1875">
                <font>
                   <Font size="24.0" />

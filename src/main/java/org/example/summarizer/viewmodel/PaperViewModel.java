@@ -2,22 +2,21 @@ package org.example.summarizer.viewmodel;
 
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+import org.example.summarizer.domain.LocalDateTransformer;
 import org.example.summarizer.domain.Paper;
 
-public class PaperViewModel {
+//Commented text shall be used later to widen the information on papers got on saved papers page
+
+public class PaperViewModel implements SavedListItem {
     private final Paper paper;
 
     private final StringProperty title;
     private final StringProperty authors;
-//    private final StringProperty abstractText;
-// Need to add this thing later!!!
 
-    public PaperViewModel(Paper paper/*, StringProperty abstractText*/) {
+    public PaperViewModel(Paper paper) {
         this.paper = paper;
         this.title = new SimpleStringProperty(paper.title());
         this.authors = new SimpleStringProperty(paper.authors());
-//        this.abstractText = new SimpleStringProperty(paper.abstractText());
-// Need to add this thing later!!!
     }
 
     public String makePreview(String text) {
@@ -36,5 +35,14 @@ public class PaperViewModel {
     public StringProperty authorsProperty() {
         return authors;
     }
+
+    public String displayTitle() {
+        return titleProperty().get();
+    }
+
+    public String displaySubtitle() {
+        return authorsProperty().get();
+    }
+
 
 }
