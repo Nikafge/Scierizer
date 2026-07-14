@@ -16,6 +16,7 @@ import org.example.summarizer.service.PaperSearchService;
 import org.example.summarizer.service.SummaryService;
 import org.example.summarizer.view.MainViewController;
 import org.example.summarizer.view.PaperDetailViewController;
+import org.example.summarizer.view.TopNavigationController;
 import org.example.summarizer.viewmodel.MainViewModel;
 import org.example.summarizer.viewmodel.PaperDetailsViewModel;
 import java.io.IOException;
@@ -49,6 +50,7 @@ public class HelloApplication extends Application {
         MainViewController controller = fxmlLoader.getController();
         NavigationService navigationService = new NavigationService(primaryStage, mainViewModel);
         controller.setViewModel(mainViewModel);
+        controller.setNavigationService(navigationService);
         controller.setOnPaperSelected(paper -> {
 
             try {

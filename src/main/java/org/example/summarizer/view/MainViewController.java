@@ -22,6 +22,9 @@ public class MainViewController {
     private Consumer<Paper> onPaperSelected;
 
     @FXML
+    private TopNavigationController navigationController;
+
+    @FXML
     private TextField searchField;
 
     @FXML
@@ -58,6 +61,7 @@ public class MainViewController {
         initializeCategoryButtons();    //initialize categories
         bindViewModel();                //fields binding
     }
+
 
 
     private void initializeCategoryButtons() {
@@ -126,6 +130,7 @@ public class MainViewController {
 
     public void setNavigationService(NavigationService navigationService) {
         this.navigationService = navigationService;
+        navigationController.setNavigationService(navigationService);
     }
 
     public void setOnPaperSelected(Consumer<Paper> onPaperSelected) {
