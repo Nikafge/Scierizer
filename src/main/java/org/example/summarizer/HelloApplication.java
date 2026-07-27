@@ -29,14 +29,14 @@ public class HelloApplication extends Application {
     PaperSearchService paperSearchService = new PaperSearchService(arxivClient);
     SummaryService summaryService = new SummaryService(new TextExtractor(), new OllamaClient(), new TextShredder());
     DBInitializer dbInitializer = new DBInitializer(Path.of(System.getProperty("user.home"), ".summarizer"));
+    private MainViewModel mainViewModel;
+    private NavigationService navigationService;
 
     @Override
     public void start(Stage stage) throws IOException, SQLException {
         primaryStage = stage;
         dbInitializer.initialize();
-        NavigationService navigationService = new NavigationService(stage);
-        //Initialize dependencies
-
+        initializeNavigation();
 
         showMainView();
         primaryStage.setTitle("Arxiv Summarizer");
@@ -46,21 +46,32 @@ public class HelloApplication extends Application {
     private void showMainView() throws IOException{
         FXMLLoader fxmlLoader = new FXMLLoader(HelloApplication.class.getResource("Main.fxml"));
         Parent root = fxmlLoader.load();
-        MainViewModel mainViewModel = new MainViewModel(paperSearchService);
         MainViewController controller = fxmlLoader.getController();
         controller.setViewModel(mainViewModel);
-        controller.setOnPaperSelected(paper -> {
+        controller.setNavigationService(navigationService);
+        controller.setOnPaperSelected(navigationServicePaperSelectionHandler());
+
+        primaryStage.setScene(new Scene(root));
+    }
+
+    private void initializeNavigation() {
+        mainViewModel = new MainViewModel(paperSearchService);
+        navigationService = new NavigationService(primaryStage, mainViewModel, dbInitializer);
+        navigationService.setOnPaperSelected(navigationServicePaperSelectionHandler());
+    }
+
+    private java.util.function.Consumer<Paper> navigationServicePaperSelectionHandler() {
+        return paper -> {
             try {
                 showPaperDetailsView(paper);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-        });
-
-        primaryStage.setScene(new Scene(root));
+        };
     }
 
     private void showPaperDetailsView(Paper paper) throws IOException {
+        Scene previousScene = primaryStage.getScene();
         FXMLLoader fxmlLoader = new FXMLLoader(HelloApplication.class.getResource("detailedPaper.fxml"));
 
         Parent root = fxmlLoader.load();
@@ -69,10 +80,15 @@ public class HelloApplication extends Application {
 
         PaperDetailViewController controller = fxmlLoader.getController();
         controller.setPaperDetailViewModel(viewModel);
+        controller.setNavigationService(navigationService);
 
         controller.getBackButton().setOnAction(event -> {
+            if (previousScene != null) {
+                primaryStage.setScene(previousScene);
+                return;
+            }
             try {
-                showMainView();
+                navigationService.showHome();
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -82,75 +98,4 @@ public class HelloApplication extends Application {
 
     }
 
-
-
 }
-
-
-
-
-//public class HelloApplication extends Application {
-//
-//    private Stage primaryStage;
-//
-//    private PaperSearchService paperSearchService;
-//
-//    @Override
-//    public void start(Stage stage) throws IOException {
-//        this.primaryStage = stage;
-//
-//        ArxivClient arxivClient = new ArxivClient();
-//        this.paperSearchService = new PaperSearchService(arxivClient);
-//
-//        showMainView();
-//
-//        primaryStage.setTitle("arXiv Summarizer");
-//        primaryStage.show();
-//    }
-//
-//    private void showMainView() throws IOException {
-//        FXMLLoader loader = new FXMLLoader(
-//                getClass().getResource("/org/example/summarizer/view/MainView.fxml")
-//        );
-//
-//        Parent root = loader.load();
-//
-//        MainViewModel mainViewModel = new MainViewModel(paperSearchService);
-//
-//        MainViewController controller = loader.getController();
-//        controller.setViewModel(mainViewModel);
-//
-//        controller.setOnPaperSelected(paper -> {
-//            try {
-//                showPaperDetailsView(paper);
-//            } catch (IOException e) {
-//                throw new RuntimeException(e);
-//            }
-//        });
-//
-//        primaryStage.setScene(new Scene(root));
-//    }
-//
-//    private void showPaperDetailsView(Paper paper) throws IOException {
-//        FXMLLoader loader = new FXMLLoader(
-//                getClass().getResource("/org/example/summarizer/view/PaperDetailsView.fxml")
-//        );
-//
-//        Parent root = loader.load();
-//
-//        PaperDetailsViewModel viewModel = new PaperDetailsViewModel(paper);
-//
-//        PaperDetailViewController controller = loader.getController();
-//        controller.setPaperDetailViewModel(viewModel);
-//
-//        controller.getBackButton().setOnAction(event -> {
-//            try {
-//                showMainView();
-//            } catch (IOException e) {
-//                throw new RuntimeException(e);
-//            }
-//        });
-//
-//        primaryStage.setScene(new Scene(root));
-//    }
-//}

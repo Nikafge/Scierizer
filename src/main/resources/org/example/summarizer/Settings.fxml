@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<VBox prefHeight="400.0" prefWidth="640.0" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.example.summarizer.view.SettingsController">
+   <children>
+      <fx:include fx:id="topNavigation" source="TopNavigation.fxml" />
+      <AnchorPane prefHeight="358.0" prefWidth="640.0" VBox.vgrow="ALWAYS">
+         <children>
+            <Label layoutX="168.0" layoutY="32.0" prefHeight="30.0" prefWidth="304.0" text="Settings" textAlignment="CENTER">
+               <font>
+                  <Font size="24.0" />
+               </font>
+            </Label>
+            <Label layoutX="211.0" layoutY="164.0" prefHeight="21.0" prefWidth="218.0" text="No settings available yet" textAlignment="CENTER" />
+         </children>
+      </AnchorPane>
+   </children>
+</VBox>
