@@ -22,7 +22,7 @@ public class MainViewController {
     private Consumer<Paper> onPaperSelected;
 
     @FXML
-    private TopNavigationController navigationController;
+    private TopNavigationController topNavigationController;
 
     @FXML
     private TextField searchField;
@@ -130,7 +130,7 @@ public class MainViewController {
 
     public void setNavigationService(NavigationService navigationService) {
         this.navigationService = navigationService;
-        navigationController.setNavigationService(navigationService);
+        topNavigationController.setNavigationService(navigationService);
     }
 
     public void setOnPaperSelected(Consumer<Paper> onPaperSelected) {

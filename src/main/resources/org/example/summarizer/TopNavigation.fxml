@@ -4,14 +4,14 @@
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.HBox?>
 
-<AnchorPane prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.example.summarizer.view.TopNavigationController">
+<AnchorPane minHeight="42.0" prefHeight="42.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.example.summarizer.view.TopNavigationController">
    <children>
-      <HBox prefHeight="7.0" prefWidth="600.0" style="-fx-background-color: gray;">
+      <HBox prefHeight="42.0" prefWidth="600.0" style="-fx-background-color: gray;" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
          <children>
             <Button fx:id="homeButton" mnemonicParsing="false" prefHeight="42.0" prefWidth="70.0" text="Home" />
             <Button fx:id="savedSummariesButton" mnemonicParsing="false" prefHeight="42.0" prefWidth="111.0" text="Saved Summaries" />
-            <Button fx:id="savedArticlesButton" mnemonicParsing="false" prefHeight="41.0" prefWidth="111.0" text="Saved articles" />
-            <Button fx:id="settingsButton" mnemonicParsing="false" prefHeight="41.0" prefWidth="70.0" text="Settings" />
+            <Button fx:id="savedArticlesButton" mnemonicParsing="false" prefHeight="42.0" prefWidth="111.0" text="Saved articles" />
+            <Button fx:id="settingsButton" mnemonicParsing="false" prefHeight="42.0" prefWidth="70.0" text="Settings" />
          </children>
       </HBox>
    </children>

@@ -2,6 +2,7 @@ package org.example.summarizer.view;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import org.example.summarizer.service.NavigationService;
 import org.example.summarizer.viewmodel.PaperDetailsViewModel;
 import org.example.summarizer.viewmodel.SummaryType;
 
@@ -9,6 +10,9 @@ public class PaperDetailViewController {
 
     private PaperDetailsViewModel paperDetailsViewModel;
     private final ToggleGroup toggleGroup = new ToggleGroup();
+
+    @FXML
+    private TopNavigationController topNavigationController;
 
     //Navigation
     @FXML
@@ -162,5 +166,8 @@ public class PaperDetailViewController {
         return backButton;
     }
 
+    public void setNavigationService(NavigationService navigationService) {
+        topNavigationController.setNavigationService(navigationService);
+    }
 
 }
