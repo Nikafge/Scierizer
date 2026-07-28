@@ -13,5 +13,6 @@ public interface SummaryRepository {
     Optional<Summary> findByID(int id);
     Optional<Summary> findByPdfLinkAndType(String pdfLink, SummaryType summaryType);
     List<Summary> findAll();
+    void deleteById(int id);
 
 }

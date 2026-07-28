@@ -1,22 +1,597 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
-<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.control.PasswordField?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.Spinner?>
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.TitledPane?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Priority?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
-<?import javafx.scene.text.Font?>
 
-<VBox prefHeight="400.0" prefWidth="640.0" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.example.summarizer.view.SettingsController">
-   <children>
-      <fx:include fx:id="topNavigation" source="TopNavigation.fxml" />
-      <AnchorPane prefHeight="358.0" prefWidth="640.0" VBox.vgrow="ALWAYS">
-         <children>
-            <Label layoutX="168.0" layoutY="32.0" prefHeight="30.0" prefWidth="304.0" text="Settings" textAlignment="CENTER">
-               <font>
-                  <Font size="24.0" />
-               </font>
-            </Label>
-            <Label layoutX="211.0" layoutY="164.0" prefHeight="21.0" prefWidth="218.0" text="No settings available yet" textAlignment="CENTER" />
-         </children>
-      </AnchorPane>
-   </children>
-</VBox>
+<BorderPane prefHeight="760.0"
+            prefWidth="980.0"
+            styleClass="app-root"
+            stylesheets="@app.css"
+            xmlns="http://javafx.com/javafx/21"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="org.example.summarizer.view.SettingsController">
+
+   <top>
+      <fx:include fx:id="topNavigation" source="TopNavigation.fxml"/>
+   </top>
+
+   <center>
+      <StackPane alignment="TOP_CENTER">
+         <padding>
+            <Insets top="24.0" right="40.0" bottom="16.0" left="40.0"/>
+         </padding>
+
+      <VBox maxWidth="1080.0" spacing="12.0">
+         <VBox spacing="4.0">
+            <Label text="Application settings"
+                   styleClass="page-title"/>
+            <Label text="Configure the model provider, context size, document processing and local storage."
+                   wrapText="true"
+                   styleClass="status-label"/>
+         </VBox>
+
+         <TabPane fx:id="settingsTabPane"
+                  tabClosingPolicy="UNAVAILABLE"
+                  VBox.vgrow="ALWAYS">
+
+            <!-- ====================================================== -->
+            <!-- MODEL                                                   -->
+            <!-- ====================================================== -->
+            <tabs>
+               <Tab text="Model">
+                  <ScrollPane fitToWidth="true"
+                              hbarPolicy="NEVER"
+                              pannable="true">
+                     <content>
+                        <VBox spacing="14.0">
+                           <padding>
+                              <Insets top="14.0" right="14.0" bottom="18.0" left="14.0"/>
+                           </padding>
+
+                           <TitledPane text="Active model" expanded="true" collapsible="false">
+                              <content>
+                                 <GridPane hgap="12.0" vgap="12.0">
+                                    <padding>
+                                       <Insets top="14.0" right="14.0" bottom="14.0" left="14.0"/>
+                                    </padding>
+
+                                    <columnConstraints>
+                                       <ColumnConstraints minWidth="180.0" prefWidth="210.0"/>
+                                       <ColumnConstraints hgrow="ALWAYS"/>
+                                       <ColumnConstraints minWidth="120.0"/>
+                                    </columnConstraints>
+
+                                    <Label text="Provider:"
+                                           GridPane.columnIndex="0"
+                                           GridPane.rowIndex="0"/>
+                                    <ComboBox fx:id="providerComboBox"
+                                              promptText="Select provider"
+                                              maxWidth="1.7976931348623157E308"
+                                              GridPane.columnIndex="1"
+                                              GridPane.rowIndex="0"/>
+
+                                    <Label text="Model:"
+                                           GridPane.columnIndex="0"
+                                           GridPane.rowIndex="1"/>
+                                    <ComboBox fx:id="modelComboBox"
+                                              editable="true"
+                                              promptText="For example: qwen3:8b"
+                                              maxWidth="1.7976931348623157E308"
+                                              GridPane.columnIndex="1"
+                                              GridPane.rowIndex="1"/>
+                                    <Button fx:id="refreshModelsButton"
+                                            text="Refresh models"
+                                            GridPane.columnIndex="2"
+                                            GridPane.rowIndex="1"/>
+
+                                    <Label text="Request timeout:"
+                                           GridPane.columnIndex="0"
+                                           GridPane.rowIndex="2"/>
+                                    <HBox spacing="8.0"
+                                          alignment="CENTER_LEFT"
+                                          GridPane.columnIndex="1"
+                                          GridPane.rowIndex="2">
+                                       <Spinner fx:id="requestTimeoutMinutesSpinner"
+                                                editable="true"
+                                                prefWidth="140.0"/>
+                                       <Label text="minutes"/>
+                                    </HBox>
+                                 </GridPane>
+                              </content>
+                           </TitledPane>
+
+                           <TitledPane fx:id="ollamaSettingsPane"
+                                       text="Ollama"
+                                       expanded="true">
+                              <content>
+                                 <GridPane hgap="12.0" vgap="12.0">
+                                    <padding>
+                                       <Insets top="14.0" right="14.0" bottom="14.0" left="14.0"/>
+                                    </padding>
+
+                                    <columnConstraints>
+                                       <ColumnConstraints minWidth="180.0" prefWidth="210.0"/>
+                                       <ColumnConstraints hgrow="ALWAYS"/>
+                                       <ColumnConstraints minWidth="120.0"/>
+                                    </columnConstraints>
+
+                                    <Label text="Ollama URL:"
+                                           GridPane.columnIndex="0"
+                                           GridPane.rowIndex="0"/>
+                                    <TextField fx:id="ollamaBaseUrlField"
+                                               promptText="http://localhost:11434"
+                                               GridPane.columnIndex="1"
+                                               GridPane.rowIndex="0"/>
+
+                                    <Label text="Context configuration:"
+                                           GridPane.columnIndex="0"
+                                           GridPane.rowIndex="1"/>
+                                    <ComboBox fx:id="contextModeComboBox"
+                                              promptText="Auto or manual"
+                                              maxWidth="1.7976931348623157E308"
+                                              GridPane.columnIndex="1"
+                                              GridPane.rowIndex="1"/>
+
+                                    <Label text="Detected video memory:"
+                                           GridPane.columnIndex="0"
+                                           GridPane.rowIndex="2"/>
+                                    <HBox spacing="10.0"
+                                          alignment="CENTER_LEFT"
+                                          GridPane.columnIndex="1"
+                                          GridPane.rowIndex="2">
+                                       <Label fx:id="detectedVramLabel"
+                                              text="Not detected"/>
+                                       <Button fx:id="detectVramButton"
+                                               text="Detect"/>
+                                    </HBox>
+
+                                    <Label text="Context length:"
+                                           GridPane.columnIndex="0"
+                                           GridPane.rowIndex="3"/>
+                                    <HBox spacing="8.0"
+                                          alignment="CENTER_LEFT"
+                                          GridPane.columnIndex="1"
+                                          GridPane.rowIndex="3">
+                                       <Spinner fx:id="contextTokensSpinner"
+                                                editable="true"
+                                                prefWidth="160.0"/>
+                                       <Label text="tokens"/>
+                                    </HBox>
+
+                                    <Label text="Maximum output:"
+                                           GridPane.columnIndex="0"
+                                           GridPane.rowIndex="4"/>
+                                    <HBox spacing="8.0"
+                                          alignment="CENTER_LEFT"
+                                          GridPane.columnIndex="1"
+                                          GridPane.rowIndex="4">
+                                       <Spinner fx:id="maxOutputTokensSpinner"
+                                                editable="true"
+                                                prefWidth="160.0"/>
+                                       <Label text="tokens"/>
+                                    </HBox>
+
+                                    <Label text="The usable input is smaller than the full context because the prompt and generated answer also occupy tokens."
+                                           wrapText="true"
+                                           style="-fx-text-fill: #666666;"
+                                           GridPane.columnIndex="1"
+                                           GridPane.rowIndex="5"
+                                           GridPane.columnSpan="2"/>
+                                 </GridPane>
+                              </content>
+                           </TitledPane>
+
+                           <TitledPane fx:id="cloudSettingsPane"
+                                       text="Cloud provider"
+                                       expanded="true">
+                              <content>
+                                 <GridPane hgap="12.0" vgap="12.0">
+                                    <padding>
+                                       <Insets top="14.0" right="14.0" bottom="14.0" left="14.0"/>
+                                    </padding>
+
+                                    <columnConstraints>
+                                       <ColumnConstraints minWidth="180.0" prefWidth="210.0"/>
+                                       <ColumnConstraints hgrow="ALWAYS"/>
+                                       <ColumnConstraints minWidth="120.0"/>
+                                    </columnConstraints>
+
+                                    <Label text="Endpoint:"
+                                           GridPane.columnIndex="0"
+                                           GridPane.rowIndex="0"/>
+                                    <TextField fx:id="cloudEndpointField"
+                                               promptText="Use the provider default or enter a custom endpoint"
+                                               GridPane.columnIndex="1"
+                                               GridPane.rowIndex="0"
+                                               GridPane.columnSpan="2"/>
+
+                                    <Label text="API key:"
+                                           GridPane.columnIndex="0"
+                                           GridPane.rowIndex="1"/>
+                                    <PasswordField fx:id="apiKeyField"
+                                                   promptText="Enter API key"
+                                                   GridPane.columnIndex="1"
+                                                   GridPane.rowIndex="1"/>
+                                    <Button fx:id="clearApiKeyButton"
+                                            text="Clear key"
+                                            GridPane.columnIndex="2"
+                                            GridPane.rowIndex="1"/>
+
+                                    <CheckBox fx:id="rememberApiKeyCheckBox"
+                                              text="Remember API key on this device"
+                                              GridPane.columnIndex="1"
+                                              GridPane.rowIndex="2"
+                                              GridPane.columnSpan="2"/>
+
+                                    <Label text="The key should be stored separately from ordinary application settings."
+                                           wrapText="true"
+                                           style="-fx-text-fill: #666666;"
+                                           GridPane.columnIndex="1"
+                                           GridPane.rowIndex="3"
+                                           GridPane.columnSpan="2"/>
+                                 </GridPane>
+                              </content>
+                           </TitledPane>
+
+                           <HBox spacing="10.0" alignment="CENTER_LEFT">
+                              <Button fx:id="testConnectionButton"
+                                      text="Test connection"
+                                      defaultButton="false"/>
+                              <Label fx:id="connectionStatusLabel"
+                                     text=""
+                                     wrapText="true"/>
+                           </HBox>
+                        </VBox>
+                     </content>
+                  </ScrollPane>
+               </Tab>
+
+               <!-- ================================================== -->
+               <!-- PROCESSING                                         -->
+               <!-- ================================================== -->
+               <Tab text="Processing">
+                  <ScrollPane fitToWidth="true"
+                              hbarPolicy="NEVER"
+                              pannable="true">
+                     <content>
+                        <VBox spacing="14.0">
+                           <padding>
+                              <Insets top="14.0" right="14.0" bottom="18.0" left="14.0"/>
+                           </padding>
+
+                           <TitledPane text="Context and chunking"
+                                       expanded="true"
+                                       collapsible="false">
+                              <content>
+                                 <GridPane hgap="12.0" vgap="12.0">
+                                    <padding>
+                                       <Insets top="14.0" right="14.0" bottom="14.0" left="14.0"/>
+                                    </padding>
+
+                                    <columnConstraints>
+                                       <ColumnConstraints minWidth="200.0" prefWidth="230.0"/>
+                                       <ColumnConstraints hgrow="ALWAYS"/>
+                                    </columnConstraints>
+
+                                    <Label text="Chunking policy:"
+                                           GridPane.columnIndex="0"
+                                           GridPane.rowIndex="0"/>
+                                    <ComboBox fx:id="chunkingModeComboBox"
+                                              promptText="Auto"
+                                              maxWidth="1.7976931348623157E308"
+                                              GridPane.columnIndex="1"
+                                              GridPane.rowIndex="0"/>
+
+                                    <Label text="Chunk size:"
+                                           GridPane.columnIndex="0"
+                                           GridPane.rowIndex="1"/>
+                                    <HBox spacing="8.0"
+                                          alignment="CENTER_LEFT"
+                                          GridPane.columnIndex="1"
+                                          GridPane.rowIndex="1">
+                                       <Spinner fx:id="chunkSizeTokensSpinner"
+                                                editable="true"
+                                                prefWidth="160.0"/>
+                                       <Label text="tokens"/>
+                                    </HBox>
+
+                                    <Label text="Chunk overlap:"
+                                           GridPane.columnIndex="0"
+                                           GridPane.rowIndex="2"/>
+                                    <HBox spacing="8.0"
+                                          alignment="CENTER_LEFT"
+                                          GridPane.columnIndex="1"
+                                          GridPane.rowIndex="2">
+                                       <Spinner fx:id="chunkOverlapTokensSpinner"
+                                                editable="true"
+                                                prefWidth="160.0"/>
+                                       <Label text="tokens"/>
+                                    </HBox>
+
+                                    <Label text="In Auto mode the application sends the full article when it fits into the selected context and splits it only when necessary."
+                                           wrapText="true"
+                                           style="-fx-text-fill: #666666;"
+                                           GridPane.columnIndex="1"
+                                           GridPane.rowIndex="3"/>
+                                 </GridPane>
+                              </content>
+                           </TitledPane>
+
+                           <TitledPane text="Summary defaults"
+                                       expanded="true"
+                                       collapsible="false">
+                              <content>
+                                 <GridPane hgap="12.0" vgap="12.0">
+                                    <padding>
+                                       <Insets top="14.0" right="14.0" bottom="14.0" left="14.0"/>
+                                    </padding>
+
+                                    <columnConstraints>
+                                       <ColumnConstraints minWidth="200.0" prefWidth="230.0"/>
+                                       <ColumnConstraints hgrow="ALWAYS"/>
+                                    </columnConstraints>
+
+                                    <Label text="Default summary type:"
+                                           GridPane.columnIndex="0"
+                                           GridPane.rowIndex="0"/>
+                                    <ComboBox fx:id="defaultSummaryTypeComboBox"
+                                              promptText="Structured"
+                                              maxWidth="1.7976931348623157E308"
+                                              GridPane.columnIndex="1"
+                                              GridPane.rowIndex="0"/>
+
+                                    <Label text="Output language:"
+                                           GridPane.columnIndex="0"
+                                           GridPane.rowIndex="1"/>
+                                    <ComboBox fx:id="outputLanguageComboBox"
+                                              editable="true"
+                                              promptText="English"
+                                              maxWidth="1.7976931348623157E308"
+                                              GridPane.columnIndex="1"
+                                              GridPane.rowIndex="1"/>
+
+                                    <Separator GridPane.columnIndex="0"
+                                               GridPane.rowIndex="2"
+                                               GridPane.columnSpan="2"/>
+
+                                    <CheckBox fx:id="preserveNumbersCheckBox"
+                                              text="Preserve important numerical values"
+                                              GridPane.columnIndex="1"
+                                              GridPane.rowIndex="3"/>
+
+                                    <CheckBox fx:id="includeEquationsCheckBox"
+                                              text="Mention important equations"
+                                              GridPane.columnIndex="1"
+                                              GridPane.rowIndex="4"/>
+
+                                    <CheckBox fx:id="includeReferencesCheckBox"
+                                              text="Include important references"
+                                              GridPane.columnIndex="1"
+                                              GridPane.rowIndex="5"/>
+
+                                    <CheckBox fx:id="includeFiguresCheckBox"
+                                              text="Mention important figures and tables"
+                                              GridPane.columnIndex="1"
+                                              GridPane.rowIndex="6"/>
+                                 </GridPane>
+                              </content>
+                           </TitledPane>
+                        </VBox>
+                     </content>
+                  </ScrollPane>
+               </Tab>
+
+               <!-- ================================================== -->
+               <!-- STORAGE                                            -->
+               <!-- ================================================== -->
+               <Tab text="Storage">
+                  <ScrollPane fitToWidth="true"
+                              hbarPolicy="NEVER"
+                              pannable="true">
+                     <content>
+                        <VBox spacing="14.0">
+                           <padding>
+                              <Insets top="14.0" right="14.0" bottom="18.0" left="14.0"/>
+                           </padding>
+
+                           <TitledPane text="Directories"
+                                       expanded="true"
+                                       collapsible="false">
+                              <content>
+                                 <GridPane hgap="12.0" vgap="12.0">
+                                    <padding>
+                                       <Insets top="14.0" right="14.0" bottom="14.0" left="14.0"/>
+                                    </padding>
+
+                                    <columnConstraints>
+                                       <ColumnConstraints minWidth="190.0" prefWidth="220.0"/>
+                                       <ColumnConstraints hgrow="ALWAYS"/>
+                                       <ColumnConstraints minWidth="90.0"/>
+                                    </columnConstraints>
+
+                                    <Label text="Saved articles:"
+                                           GridPane.columnIndex="0"
+                                           GridPane.rowIndex="0"/>
+                                    <TextField fx:id="papersDirectoryField"
+                                               editable="false"
+                                               promptText="Select a directory"
+                                               GridPane.columnIndex="1"
+                                               GridPane.rowIndex="0"/>
+                                    <Button fx:id="browsePapersDirectoryButton"
+                                            text="Browse..."
+                                            GridPane.columnIndex="2"
+                                            GridPane.rowIndex="0"/>
+
+                                    <Label text="Exported summaries:"
+                                           GridPane.columnIndex="0"
+                                           GridPane.rowIndex="1"/>
+                                    <TextField fx:id="summariesDirectoryField"
+                                               editable="false"
+                                               promptText="Select a directory"
+                                               GridPane.columnIndex="1"
+                                               GridPane.rowIndex="1"/>
+                                    <Button fx:id="browseSummariesDirectoryButton"
+                                            text="Browse..."
+                                            GridPane.columnIndex="2"
+                                            GridPane.rowIndex="1"/>
+
+                                    <Label text="Temporary files:"
+                                           GridPane.columnIndex="0"
+                                           GridPane.rowIndex="2"/>
+                                    <TextField fx:id="temporaryDirectoryField"
+                                               editable="false"
+                                               promptText="Select a directory"
+                                               GridPane.columnIndex="1"
+                                               GridPane.rowIndex="2"/>
+                                    <Button fx:id="browseTemporaryDirectoryButton"
+                                            text="Browse..."
+                                            GridPane.columnIndex="2"
+                                            GridPane.rowIndex="2"/>
+
+                                    <Label text="Summary export format:"
+                                           GridPane.columnIndex="0"
+                                           GridPane.rowIndex="3"/>
+                                    <ComboBox fx:id="summaryExportFormatComboBox"
+                                              promptText="Markdown"
+                                              maxWidth="1.7976931348623157E308"
+                                              GridPane.columnIndex="1"
+                                              GridPane.rowIndex="3"/>
+                                 </GridPane>
+                              </content>
+                           </TitledPane>
+
+                           <TitledPane text="File handling"
+                                       expanded="true"
+                                       collapsible="false">
+                              <content>
+                                 <VBox spacing="10.0">
+                                    <padding>
+                                       <Insets top="14.0" right="14.0" bottom="14.0" left="14.0"/>
+                                    </padding>
+
+                                    <CheckBox fx:id="downloadPdfWhenSavingCheckBox"
+                                              text="Download the PDF when an article is saved"/>
+                                    <CheckBox fx:id="exportSummaryWhenSavingCheckBox"
+                                              text="Export the summary to a file when it is saved"/>
+                                    <CheckBox fx:id="keepExtractedTextCheckBox"
+                                              text="Keep extracted plain text"/>
+                                    <CheckBox fx:id="clearTemporaryFilesOnExitCheckBox"
+                                              text="Delete temporary files when the application closes"/>
+                                 </VBox>
+                              </content>
+                           </TitledPane>
+                        </VBox>
+                     </content>
+                  </ScrollPane>
+               </Tab>
+
+               <!-- ================================================== -->
+               <!-- PRIVACY                                            -->
+               <!-- ================================================== -->
+<!--               <Tab text="Privacy">-->
+<!--                  <ScrollPane fitToWidth="true"-->
+<!--                              hbarPolicy="NEVER"-->
+<!--                              pannable="true">-->
+<!--                     <content>-->
+<!--                        <VBox spacing="14.0">-->
+<!--                           <padding>-->
+<!--                              <Insets top="14.0" right="14.0" bottom="18.0" left="14.0"/>-->
+<!--                           </padding>-->
+
+<!--                           <TitledPane text="Cloud requests"-->
+<!--                                       expanded="true"-->
+<!--                                       collapsible="false">-->
+<!--                              <content>-->
+<!--                                 <VBox spacing="10.0">-->
+<!--                                    <padding>-->
+<!--                                       <Insets top="14.0" right="14.0" bottom="14.0" left="14.0"/>-->
+<!--                                    </padding>-->
+
+<!--                                    <CheckBox fx:id="confirmBeforeCloudUploadCheckBox"-->
+<!--                                              text="Ask before sending a document to a cloud provider"/>-->
+<!--                                    <CheckBox fx:id="allowCloudForLocalFilesCheckBox"-->
+<!--                                              text="Allow local files to be sent to cloud models"/>-->
+<!--                                    <CheckBox fx:id="sendPaperMetadataCheckBox"-->
+<!--                                              text="Include the paper title and authors in the request"/>-->
+<!--                                 </VBox>-->
+<!--                              </content>-->
+<!--                           </TitledPane>-->
+
+<!--                           <TitledPane text="Diagnostics and logs"-->
+<!--                                       expanded="true"-->
+<!--                                       collapsible="false">-->
+<!--                              <content>-->
+<!--                                 <VBox spacing="10.0">-->
+<!--                                    <padding>-->
+<!--                                       <Insets top="14.0" right="14.0" bottom="14.0" left="14.0"/>-->
+<!--                                    </padding>-->
+
+<!--                                    <CheckBox fx:id="logPromptsCheckBox"-->
+<!--                                              text="Write prompts to diagnostic logs"/>-->
+<!--                                    <CheckBox fx:id="logResponsesCheckBox"-->
+<!--                                              text="Write model responses to diagnostic logs"/>-->
+
+<!--                                    <Label text="Prompt and response logging can expose article content or other sensitive information."-->
+<!--                                           wrapText="true"-->
+<!--                                           style="-fx-text-fill: #8a4b08;"/>-->
+<!--                                 </VBox>-->
+<!--                              </content>-->
+<!--                           </TitledPane>-->
+<!--                        </VBox>-->
+<!--                     </content>-->
+<!--                  </ScrollPane>-->
+<!--               </Tab>-->
+            </tabs>
+         </TabPane>
+      </VBox>
+      </StackPane>
+   </center>
+
+   <bottom>
+      <StackPane alignment="CENTER">
+         <padding>
+            <Insets top="10.0" right="40.0" bottom="18.0" left="40.0"/>
+         </padding>
+
+      <VBox maxWidth="1080.0" spacing="8.0">
+         <Separator/>
+
+         <HBox spacing="10.0" alignment="CENTER_RIGHT">
+            <Label fx:id="saveStatusLabel"
+                   text=""
+                   wrapText="true"/>
+
+            <Region HBox.hgrow="ALWAYS"/>
+
+            <Button fx:id="resetDefaultsButton"
+                    text="Reset defaults"/>
+            <Button fx:id="cancelButton"
+                    text="Cancel"
+                    cancelButton="true"/>
+            <Button fx:id="saveButton"
+                    text="Save"
+                    defaultButton="true"/>
+         </HBox>
+      </VBox>
+      </StackPane>
+   </bottom>
+</BorderPane>

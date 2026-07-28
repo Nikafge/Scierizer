@@ -21,15 +21,24 @@ public class NavigationService {
     private final Stage stage;
     private final MainViewModel mainViewModel;
     private final DBInitializer dbInitializer;
+    private final SettingsService settingsService;
     private Consumer<Paper> onPaperSelected;
     private Consumer<Summary> onSummarySelected;
-//    private final SettingsViewModel settingsViewModel;
-//    private final SavedContentViewModel savedContentViewModel;
 
     public NavigationService(Stage stage, MainViewModel mainViewModel, DBInitializer dbInitializer) {
+        this(stage, mainViewModel, dbInitializer, new SettingsService(dbInitializer.getAppDbPath()));
+    }
+
+    public NavigationService(
+            Stage stage,
+            MainViewModel mainViewModel,
+            DBInitializer dbInitializer,
+            SettingsService settingsService
+    ) {
         this.stage = stage;
         this.mainViewModel = mainViewModel;
         this.dbInitializer = dbInitializer;
+        this.settingsService = settingsService;
     }
 
     public void setOnPaperSelected(Consumer<Paper> onPaperSelected) {
@@ -60,8 +69,7 @@ public class NavigationService {
         mainViewController.setNavigationService(this);
         mainViewController.setOnPaperSelected(onPaperSelected);
 
-        stage.setScene(new Scene(root));
-        stage.show();
+        setScenePreservingWindowState(root);
     }
 
     public void showSavedContent(SavedContentType savedContentType) throws IOException {
@@ -71,8 +79,7 @@ public class NavigationService {
         savedContentController.setNavigationService(this);
         savedContentController.setContentType(savedContentType, dbInitializer);
 
-        stage.setScene(new Scene(root));
-        stage.show();
+        setScenePreservingWindowState(root);
     }
 
     public void showSettings() throws IOException {
@@ -80,8 +87,53 @@ public class NavigationService {
         Parent root = fxmlLoader.load();
         SettingsController settingsController = fxmlLoader.getController();
         settingsController.setNavigationService(this);
+        settingsController.setSettingsService(settingsService);
 
-        stage.setScene(new Scene(root));
+        setScenePreservingWindowState(root);
+    }
+
+    private void setScenePreservingWindowState(Parent root) {
+        Scene currentScene = stage.getScene();
+        boolean wasFullScreen = stage.isFullScreen();
+        boolean wasMaximized = stage.isMaximized();
+        double width = preservedDimension(
+                currentScene == null ? 0 : currentScene.getWidth(),
+                stage.getWidth(),
+                root.prefWidth(-1),
+                1120
+        );
+        double height = preservedDimension(
+                currentScene == null ? 0 : currentScene.getHeight(),
+                stage.getHeight(),
+                root.prefHeight(-1),
+                720
+        );
+
+        stage.setScene(new Scene(root, width, height));
+        stage.setMaximized(wasMaximized);
+        stage.setFullScreen(wasFullScreen);
         stage.show();
+    }
+
+    private double preservedDimension(
+            double currentSceneDimension,
+            double stageDimension,
+            double rootPreferredDimension,
+            double fallback
+    ) {
+        if (isUsableDimension(currentSceneDimension)) {
+            return currentSceneDimension;
+        }
+        if (isUsableDimension(stageDimension)) {
+            return stageDimension;
+        }
+        if (isUsableDimension(rootPreferredDimension)) {
+            return rootPreferredDimension;
+        }
+        return fallback;
+    }
+
+    private boolean isUsableDimension(double dimension) {
+        return !Double.isNaN(dimension) && dimension > 0;
     }
 }

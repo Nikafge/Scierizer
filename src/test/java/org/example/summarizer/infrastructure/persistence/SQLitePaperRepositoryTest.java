@@ -43,5 +43,34 @@ class SQLitePaperRepositoryTest {
         papers.forEach(paper -> paperRepository.save(paper));
         Assertions.assertEquals(papers, paperRepository.findAll());
     }
+
+    @Test
+    void saveWithZeroIdCreatesNewRowsInsteadOfOverwriting() {
+        Paper firstPaper = new Paper("first title", 0, "first abstract", LocalDate.of(2026, 5, 2), LocalDate.of(2026, 5, 2), "author 1", "http:first_pdf_link");
+        Paper secondPaper = new Paper("second title", 0, "second abstract", LocalDate.of(2026, 5, 3), LocalDate.of(2026, 5, 3), "author 2", "http:second_pdf_link");
+
+        paperRepository.save(firstPaper);
+        paperRepository.save(secondPaper);
+
+        List<Paper> savedPapers = paperRepository.findAll();
+        assertEquals(2, savedPapers.size());
+        assertEquals("first title", savedPapers.get(0).title());
+        assertEquals("second title", savedPapers.get(1).title());
+        assertEquals(1, savedPapers.get(0).id());
+        assertEquals(2, savedPapers.get(1).id());
+    }
+
+    @Test
+    void deleteByIdRemovesOnlySelectedPaper() {
+        Paper firstPaper = new Paper("first title", 1, "first abstract", LocalDate.of(2026, 5, 2), LocalDate.of(2026, 5, 2), "author 1", "http:first_pdf_link");
+        Paper secondPaper = new Paper("second title", 2, "second abstract", LocalDate.of(2026, 5, 3), LocalDate.of(2026, 5, 3), "author 2", "http:second_pdf_link");
+        paperRepository.save(firstPaper);
+        paperRepository.save(secondPaper);
+
+        paperRepository.deleteById(1);
+
+        assertTrue(paperRepository.findById(1).isEmpty());
+        assertEquals(List.of(secondPaper), paperRepository.findAll());
+    }
 }
 

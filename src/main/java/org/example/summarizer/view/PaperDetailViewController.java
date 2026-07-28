@@ -76,8 +76,6 @@ public class PaperDetailViewController {
         executive.setUserData(SummaryType.EXECUTIVE);
         research.setUserData(SummaryType.RESEARCH_NOTE);
 
-        tldr.setSelected(true);
-
         toggleGroup.selectedToggleProperty().addListener((observable, oldToggle, newToggle) -> {
             if (paperDetailsViewModel == null) {
                 return;
@@ -107,6 +105,8 @@ public class PaperDetailViewController {
     public void setPaperDetailViewModel(PaperDetailsViewModel paperDetailsViewModel) {
         this.paperDetailsViewModel = paperDetailsViewModel;
         bindPaperViewModel();
+        selectSummaryType(paperDetailsViewModel.selectedSummaryTypeProperty().get());
+        syncSelectedSummaryTypeWithViewModel();
     }
 
     private void bindPaperViewModel() {
@@ -159,6 +159,20 @@ public class PaperDetailViewController {
         if (selectedToggle != null) {
             SummaryType selectedSummaryType = (SummaryType) selectedToggle.getUserData();
             paperDetailsViewModel.selectedSummaryTypeProperty().set(selectedSummaryType);
+        }
+    }
+
+    private void selectSummaryType(SummaryType summaryType) {
+        if (summaryType == null) {
+            toggleGroup.selectToggle(null);
+            return;
+        }
+
+        for (Toggle toggle : toggleGroup.getToggles()) {
+            if (summaryType == toggle.getUserData()) {
+                toggleGroup.selectToggle(toggle);
+                return;
+            }
         }
     }
 

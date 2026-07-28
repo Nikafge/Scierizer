@@ -6,6 +6,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import org.example.summarizer.domain.settings.AppSettings;
+import org.example.summarizer.domain.settings.ModelSettings;
+import org.example.summarizer.domain.settings.ProcessingSettings;
 
 
 import java.io.IOException;
@@ -37,37 +40,37 @@ private record OllamaGenerateResponse(
             "- If a number is associated with a specific claim or measurement in the text, keep that exact association — do not attach a number to a different claim than the one it originally supports.\n" +
             "- If information needed to answer is not present in the text, state that explicitly rather than inferring or guessing.\n" +
             "- Do not use LaTeX formatting in your output; describe formulas and symbols in plain words.";
-    private static final String MODEL = "gemma4:e4b";
+    private final HttpClient httpClient;
+    private final ObjectMapper objectMapper;
 
-    //Comment these three lines (37-39) and uncomment lines 41-54 for testing!
-    private final String baseUrl = "http://localhost:11434/api/generate";
-    private final ObjectMapper objectMapper = new ObjectMapper();
-    private HttpClient httpClient = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
+    public OllamaClient() {
+        this(
+                HttpClient.newBuilder()
+                        .connectTimeout(Duration.ofSeconds(10))
+                        .build(),
+                new ObjectMapper()
+        );
+    }
 
-//For test purposes only!
-//    private final String baseUrl;
-//    private final ObjectMapper objectMapper;
-//    private final HttpClient httpClient;
-//
-//    public OllamaClient() {
-//        this(
-//                "http://localhost:11434/api/generate",
-//                HttpClient.newBuilder()
-//                        .connectTimeout(Duration.ofSeconds(10))
-//                        .build(),
-//                new ObjectMapper()
-//        );
-//    }
+    public OllamaClient(HttpClient httpClient, ObjectMapper objectMapper) {
+        this.httpClient = httpClient;
+        this.objectMapper = objectMapper;
+    }
 
     //Method to send request to Ollama
-    private String getOllamaResponse (String request) {
-        OllamaGenerateRequest ollamaRequest = new OllamaGenerateRequest(MODEL, request, basicRequest, false);
+    private String getOllamaResponse(String request, ModelSettings modelSettings) {
+        OllamaGenerateRequest ollamaRequest = new OllamaGenerateRequest(
+                modelSettings.modelName(),
+                request,
+                basicRequest,
+                false
+        );
         try {
             String requestBody = objectMapper.writeValueAsString(ollamaRequest);
 
             HttpRequest httpRequest = HttpRequest.newBuilder()
-                    .uri(URI.create(baseUrl))
-                    .timeout(Duration.ofMinutes(100))
+                    .uri(URI.create(generateEndpoint(modelSettings.ollamaBaseUrl())))
+                    .timeout(Duration.ofMinutes(Math.max(1, modelSettings.requestTimeoutMinutes())))
                     .header("Content-Type", "application/json")
                     .POST(HttpRequest.BodyPublishers.ofString(requestBody, StandardCharsets.UTF_8))
                     .build();
@@ -88,13 +91,30 @@ private record OllamaGenerateResponse(
                     objectMapper.readValue(httpResponse.body(), OllamaGenerateResponse.class);
 
             return ollamaResponse.response().trim();
-        } catch (IOException | InterruptedException e) {
-            throw new RuntimeException("Failed to establish connection with Ollama");
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("Failed to establish connection with Ollama", e);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to establish connection with Ollama", e);
         }
     }
 
     //create a request for AI to get summary
     public String generateSimpleSummary(SummaryType summaryType, String content) {
+        AppSettings defaults = AppSettings.defaults();
+        return generateSimpleSummary(summaryType, content, defaults.model(), defaults.processing());
+    }
+
+    public String generateSimpleSummary(SummaryType summaryType, String content, ModelSettings modelSettings) {
+        return generateSimpleSummary(summaryType, content, modelSettings, AppSettings.defaults().processing());
+    }
+
+    public String generateSimpleSummary(
+            SummaryType summaryType,
+            String content,
+            ModelSettings modelSettings,
+            ProcessingSettings processingSettings
+    ) {
 
         String specificRequest = "";
         switch (summaryType) {
@@ -151,12 +171,20 @@ private record OllamaGenerateResponse(
             default:
                 throw new IllegalArgumentException("Unsupported summary type");
         }
-        return getOllamaResponse(specificRequest.replace("{paper_text}", content));
+        return getOllamaResponse(
+                appendProcessingInstructions(specificRequest, processingSettings).replace("{paper_text}", content),
+                modelSettings
+        );
 //        return getOllamaResponse(basicRequest + specificRequest.replace("{paper_text}", content));
     }
 
     //create and send requests for every paper chunk. Return list of mini-summaries
-    private List<String> createMapSummaries (SummaryType summaryType, List<String> paperChapters) {
+    private List<String> createMapSummaries(
+            SummaryType summaryType,
+            List<String> paperChapters,
+            ModelSettings modelSettings,
+            ProcessingSettings processingSettings
+    ) {
 
         String mapRequest = "";
         List<String> chunks = new ArrayList<>();
@@ -217,9 +245,10 @@ private record OllamaGenerateResponse(
         }
 
                 mapRequest = mapRequest.replace("{total_chunks}", String.valueOf(paperChapters.size()));
+                mapRequest = appendProcessingInstructions(mapRequest, processingSettings);
 
                 for (int i = 1; i <= paperChapters.size(); i++) {
-                    chunks.add(getOllamaResponse((mapRequest.replace("{chunk_number}", String.valueOf(i))).replace("{chunk_text}", paperChapters.get(i-1))));
+                    chunks.add(getOllamaResponse((mapRequest.replace("{chunk_number}", String.valueOf(i))).replace("{chunk_text}", paperChapters.get(i-1)), modelSettings));
                 }
 
         return chunks;
@@ -227,8 +256,22 @@ private record OllamaGenerateResponse(
 
     //create a request for API to get summary from chunks
     public String generateChunkedSummary(SummaryType summaryType, List<String> chapters) {
+        AppSettings defaults = AppSettings.defaults();
+        return generateChunkedSummary(summaryType, chapters, defaults.model(), defaults.processing());
+    }
+
+    public String generateChunkedSummary(SummaryType summaryType, List<String> chapters, ModelSettings modelSettings) {
+        return generateChunkedSummary(summaryType, chapters, modelSettings, AppSettings.defaults().processing());
+    }
+
+    public String generateChunkedSummary(
+            SummaryType summaryType,
+            List<String> chapters,
+            ModelSettings modelSettings,
+            ProcessingSettings processingSettings
+    ) {
         String reducePrompt = "";
-        List<String> chunks = createMapSummaries(summaryType, chapters);
+        List<String> chunks = createMapSummaries(summaryType, chapters, modelSettings, processingSettings);
 
         switch (summaryType) {
             case TLDR:
@@ -271,8 +314,48 @@ private record OllamaGenerateResponse(
         if (reducePrompt.isEmpty()) {
             return String.join("\n", chunks);
         }
-        return getOllamaResponse(reducePrompt.replace("{combined_map_outputs}", String.join("\n", chunks)));
+        return getOllamaResponse(
+                appendProcessingInstructions(reducePrompt, processingSettings)
+                        .replace("{combined_map_outputs}", String.join("\n", chunks)),
+                modelSettings
+        );
 //        return getOllamaResponse(basicRequest + reducePrompt.replace("{combined_map_outputs}", String.join("\n", chunks)));
+    }
+
+    private String generateEndpoint(String baseUrl) {
+        String effectiveBaseUrl = baseUrl == null || baseUrl.isBlank()
+                ? AppSettings.defaults().model().ollamaBaseUrl()
+                : baseUrl.trim();
+        String withoutTrailingSlash = effectiveBaseUrl.replaceAll("/+$", "");
+
+        if (withoutTrailingSlash.endsWith("/api/generate")) {
+            return withoutTrailingSlash;
+        }
+
+        return withoutTrailingSlash + "/api/generate";
+    }
+
+    private String appendProcessingInstructions(String prompt, ProcessingSettings processingSettings) {
+        StringBuilder instructions = new StringBuilder(prompt);
+        instructions.append("\n\nAdditional output settings:\n");
+        instructions.append("- Write the summary in ")
+                .append(processingSettings.outputLanguage())
+                .append(".\n");
+
+        if (processingSettings.preserveNumbers()) {
+            instructions.append("- Preserve important numerical values and keep them attached to their original claims.\n");
+        }
+        if (processingSettings.includeEquations()) {
+            instructions.append("- Mention important equations in prose when they are explicitly present.\n");
+        }
+        if (processingSettings.includeReferences()) {
+            instructions.append("- Include important references when they are explicitly discussed in the text.\n");
+        }
+        if (processingSettings.includeFigures()) {
+            instructions.append("- Mention important figures and tables when they are relevant to the findings.\n");
+        }
+
+        return instructions.toString();
     }
 
 }

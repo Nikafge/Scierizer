@@ -10,5 +10,6 @@ public interface PaperRepository {
     void save(Paper paper);
     Optional<Paper> findById(int id);
     List<Paper> findAll();
+    void deleteById(int id);
 
 }

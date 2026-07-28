@@ -34,6 +34,12 @@ public class SummaryDetailViewController {
     private TextArea summaryArea;
 
     @FXML
+    private Button exportSummaryButton;
+
+    @FXML
+    private Label exportStatusLabel;
+
+    @FXML
     private void initialize() {
         summaryTypeField.setEditable(false);
         publishedField.setEditable(false);
@@ -53,6 +59,8 @@ public class SummaryDetailViewController {
         publishedField.textProperty().bind(summaryDetailsViewModel.datePublished());
         sourceField.textProperty().bind(summaryDetailsViewModel.sourcePdfLink());
         summaryArea.textProperty().bind(summaryDetailsViewModel.summary());
+        exportStatusLabel.textProperty().bind(summaryDetailsViewModel.exportStatus());
+        exportSummaryButton.setOnAction(event -> summaryDetailsViewModel.exportSummary());
     }
 
     public Button getBackButton() {

@@ -20,28 +20,35 @@ public class SQLiteSummaryRepository implements SummaryRepository {
 
     public void save(Summary summary) {
 
-        String sqlRequest = """
-                INSERT INTO summary (id, summary, pdf_link, title, authors, date_published, summary_type)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
-                ON CONFLICT(id) DO UPDATE SET
-                summary = excluded.summary,
-                pdf_link = excluded.pdf_link,
-                title = excluded.title,
-                authors = excluded.authors,
-                date_published = excluded.date_published,
-                summary_type = excluded.summary_type
-                """;
+        String sqlRequest = summary.id() <= 0
+                ? """
+                    INSERT INTO summary (summary, pdf_link, title, authors, date_published, summary_type)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                    """
+                : """
+                    INSERT INTO summary (id, summary, pdf_link, title, authors, date_published, summary_type)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                    ON CONFLICT(id) DO UPDATE SET
+                    summary = excluded.summary,
+                    pdf_link = excluded.pdf_link,
+                    title = excluded.title,
+                    authors = excluded.authors,
+                    date_published = excluded.date_published,
+                    summary_type = excluded.summary_type
+                    """;
 
         try (Connection connection = dbInitializer.getConnection();
              PreparedStatement statement = connection.prepareStatement(sqlRequest)) {
-            statement.setInt(1, summary.id());
-            statement.setString(2, summary.summary());
-            statement.setString(3, summary.pdfLink());
-            statement.setString(4, summary.title());
-            statement.setString(5, summary.authors());
-            statement.setString(6, LocalDateTransformer.convertToString(summary.datePublished()));
-
-            statement.setObject(7, summary.summaryType());
+            int parameterIndex = 1;
+            if (summary.id() > 0) {
+                statement.setInt(parameterIndex++, summary.id());
+            }
+            statement.setString(parameterIndex++, summary.summary());
+            statement.setString(parameterIndex++, summary.pdfLink());
+            statement.setString(parameterIndex++, summary.title());
+            statement.setString(parameterIndex++, summary.authors());
+            statement.setString(parameterIndex++, LocalDateTransformer.convertToString(summary.datePublished()));
+            statement.setString(parameterIndex, summary.summaryType().name());
             statement.executeUpdate();
         } catch (SQLException e) {
             throw new RuntimeException("Could not save summary", e);
@@ -116,6 +123,21 @@ public class SQLiteSummaryRepository implements SummaryRepository {
             return summaries;
         } catch (SQLException e) {
             throw new RuntimeException("Could not load saved summaries", e);
+        }
+    }
+
+    public void deleteById(int id) {
+        String sqlRequest = """
+                DELETE FROM summary
+                WHERE id = ?
+                """;
+
+        try (Connection connection = dbInitializer.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sqlRequest)) {
+            statement.setInt(1, id);
+            statement.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException("Could not delete saved summary", e);
         }
     }
 

@@ -11,5 +11,7 @@ module org.example.summarizer {
     requires jdk.httpserver;
     opens org.example.summarizer.view to javafx.fxml;
     opens org.example.summarizer.infrastructure.ollama to com.fasterxml.jackson.databind;
+    opens org.example.summarizer.domain.settings to com.fasterxml.jackson.databind;
+    opens org.example.summarizer.viewmodel to com.fasterxml.jackson.databind;
     exports org.example.summarizer;
 }

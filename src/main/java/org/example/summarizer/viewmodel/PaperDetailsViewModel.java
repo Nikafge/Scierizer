@@ -5,18 +5,23 @@ import javafx.concurrent.Task;
 import org.example.summarizer.domain.LocalDateTransformer;
 import org.example.summarizer.domain.Paper;
 import org.example.summarizer.domain.Summary;
+import org.example.summarizer.domain.settings.AppSettings;
+import org.example.summarizer.domain.settings.StorageSettings;
 import org.example.summarizer.infrastructure.persistence.DBInitializer;
 import org.example.summarizer.infrastructure.persistence.SQLitePaperRepository;
 import org.example.summarizer.infrastructure.persistence.SQLiteSummaryRepository;
+import org.example.summarizer.service.ReportExportService;
+import org.example.summarizer.service.SettingsService;
 import org.example.summarizer.service.SummaryService;
 
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
+import java.nio.file.Path;
 
 public class PaperDetailsViewModel {
 
     private final Paper paper;
     private final SummaryService summaryService;
+    private final SettingsService settingsService;
+    private final ReportExportService reportExportService;
 
     private final StringProperty title = new SimpleStringProperty();
     private final StringProperty authors = new SimpleStringProperty();
@@ -63,20 +68,67 @@ public class PaperDetailsViewModel {
         thread.start();
     }
     public void savePaper() {
-        SQLitePaperRepository paperRepository = new SQLitePaperRepository(dbInitializer);
-        paperRepository.save(paper);
+        try {
+            SQLitePaperRepository paperRepository = new SQLitePaperRepository(dbInitializer);
+            paperRepository.save(paper);
+
+            AppSettings settings = loadSettings();
+            StorageSettings storageSettings = settings.storage();
+            if (storageSettings.downloadPdfWhenSaving()) {
+                reportExportService.downloadPdf(paper, directoryOrDefault(storageSettings.papersDirectory()));
+            }
+            errorMessage.set("");
+        } catch (RuntimeException e) {
+            errorMessage.set("Could not save paper");
+        }
     }
 
     public void saveSummary() {
-        SQLiteSummaryRepository summaryRepository = new SQLiteSummaryRepository(dbInitializer);
-        summaryRepository.save(new Summary(0, paper.title(), paper.authors(), generatedSummary.get(), paper.datePublished(), paper.pdfLink(), selectedSummaryType.get()));
+        try {
+            SQLiteSummaryRepository summaryRepository = new SQLiteSummaryRepository(dbInitializer);
+            Summary summary = new Summary(
+                    0,
+                    paper.title(),
+                    paper.authors(),
+                    generatedSummary.get(),
+                    paper.datePublished(),
+                    paper.pdfLink(),
+                    selectedSummaryType.get()
+            );
+            summaryRepository.save(summary);
+
+            AppSettings settings = loadSettings();
+            StorageSettings storageSettings = settings.storage();
+            if (storageSettings.exportSummaryWhenSaving()) {
+                reportExportService.exportSummary(
+                        summary,
+                        directoryOrDefault(storageSettings.summariesDirectory()),
+                        storageSettings.summaryExportFormat()
+                );
+            }
+            errorMessage.set("");
+        } catch (RuntimeException e) {
+            errorMessage.set("Could not save summary");
+        }
     }
 
 
     public PaperDetailsViewModel(Paper paper, SummaryService summaryService, DBInitializer dbInitializer) {
+        this(paper, summaryService, dbInitializer, null, new ReportExportService());
+    }
+
+    public PaperDetailsViewModel(
+            Paper paper,
+            SummaryService summaryService,
+            DBInitializer dbInitializer,
+            SettingsService settingsService,
+            ReportExportService reportExportService
+    ) {
         this.paper = paper;
         this.summaryService = summaryService;
         this.dbInitializer = dbInitializer;
+        this.settingsService = settingsService;
+        this.reportExportService = reportExportService;
 
         this.title.set(paper.title());
         this.authors.set(paper.authors());
@@ -84,7 +136,25 @@ public class PaperDetailsViewModel {
         this.updated.set(LocalDateTransformer.convertToString(paper.dateUpdated()));
         this.source.set(paper.pdfLink());
         this.abstractText.set(paper.abstractText());
+        this.selectedSummaryType.set(summaryService.defaultSummaryType());
         dbInitializer.initialize();
+    }
+
+    private AppSettings loadSettings() {
+        if (settingsService == null) {
+            return AppSettings.defaults();
+        }
+        return settingsService.loadSettings();
+    }
+
+    private Path directoryOrDefault(String configuredDirectory) {
+        if (configuredDirectory != null && !configuredDirectory.isBlank()) {
+            return Path.of(configuredDirectory);
+        }
+        if (settingsService != null) {
+            return settingsService.getSettingsDirectory();
+        }
+        return dbInitializer.getAppDbPath();
     }
 
     public StringProperty titleProperty() {
