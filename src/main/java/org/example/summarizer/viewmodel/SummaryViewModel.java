@@ -25,4 +25,8 @@ public class SummaryViewModel implements SavedListItem {
         return summaryType.get();
     }
 
+    public Summary getSummary() {
+        return summary;
+    }
+
 }
