@@ -56,6 +56,14 @@ public class SavedContentController {
                         && cell.getItem() instanceof PaperViewModel paperViewModel) {
                     navigationService.openPaperDetails(paperViewModel.getPaper());
                 }
+                if (event.getButton() == MouseButton.PRIMARY
+                        && event.getClickCount() == 2
+                        && !cell.isEmpty()
+                        && savedContentType == SavedContentType.SUMMARIES
+                        && navigationService != null
+                        && cell.getItem() instanceof SummaryViewModel summaryViewModel) {
+                    navigationService.openSummaryDetails(summaryViewModel.getSummary());
+                }
             });
             return cell;
         });

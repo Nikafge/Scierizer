@@ -5,6 +5,7 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 import org.example.summarizer.domain.Paper;
+import org.example.summarizer.domain.Summary;
 import org.example.summarizer.infrastructure.persistence.DBInitializer;
 import org.example.summarizer.view.MainViewController;
 import org.example.summarizer.view.SavedContentController;
@@ -21,6 +22,7 @@ public class NavigationService {
     private final MainViewModel mainViewModel;
     private final DBInitializer dbInitializer;
     private Consumer<Paper> onPaperSelected;
+    private Consumer<Summary> onSummarySelected;
 //    private final SettingsViewModel settingsViewModel;
 //    private final SavedContentViewModel savedContentViewModel;
 
@@ -34,9 +36,19 @@ public class NavigationService {
         this.onPaperSelected = onPaperSelected;
     }
 
+    public void setOnSummarySelected(Consumer<Summary> onSummarySelected) {
+        this.onSummarySelected = onSummarySelected;
+    }
+
     public void openPaperDetails(Paper paper) {
         if (onPaperSelected != null) {
             onPaperSelected.accept(paper);
+        }
+    }
+
+    public void openSummaryDetails(Summary summary) {
+        if (onSummarySelected != null) {
+            onSummarySelected.accept(summary);
         }
     }
 
