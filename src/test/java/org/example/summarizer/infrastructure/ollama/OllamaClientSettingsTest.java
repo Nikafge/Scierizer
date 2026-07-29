@@ -92,6 +92,104 @@ class OllamaClientSettingsTest {
         assertTrue(requestJson.get("prompt").asText().contains("Include important references"));
     }
 
+    @Test
+    void generateSimpleSummarySupportsOpenAiCompatibleCloudProvider() throws IOException {
+        CloudHandler cloudHandler = new CloudHandler("""
+                {
+                  "choices": [
+                    {
+                      "message": {
+                        "content": " Cloud summary "
+                      }
+                    }
+                  ]
+                }
+                """);
+        server.createContext("/v1/chat/completions", cloudHandler);
+        OllamaClient ollamaClient = new OllamaClient(
+                HttpClient.newBuilder()
+                        .connectTimeout(Duration.ofSeconds(2))
+                        .build(),
+                objectMapper
+        );
+        ModelSettings modelSettings = new ModelSettings(
+                "OpenAI",
+                "gpt-test",
+                "http://localhost:11434",
+                "Auto",
+                "http://localhost:" + server.getAddress().getPort(),
+                "test-openai-key",
+                true,
+                8192,
+                777,
+                2
+        );
+
+        String result = ollamaClient.generateSimpleSummary(
+                SummaryType.TLDR,
+                "Paper content.",
+                modelSettings,
+                AppSettings.defaults().processing()
+        );
+
+        assertEquals("Cloud summary", result);
+        assertEquals("Bearer test-openai-key", cloudHandler.authorizationHeader);
+        JsonNode requestJson = objectMapper.readTree(cloudHandler.requests.get(0));
+        assertEquals("gpt-test", requestJson.get("model").asText());
+        assertEquals(777, requestJson.get("max_completion_tokens").asInt());
+        assertEquals("developer", requestJson.get("messages").get(0).get("role").asText());
+        assertEquals("user", requestJson.get("messages").get(1).get("role").asText());
+    }
+
+    @Test
+    void generateSimpleSummarySupportsAnthropicProvider() throws IOException {
+        CloudHandler cloudHandler = new CloudHandler("""
+                {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": " Anthropic summary "
+                    }
+                  ]
+                }
+                """);
+        server.createContext("/v1/messages", cloudHandler);
+        OllamaClient ollamaClient = new OllamaClient(
+                HttpClient.newBuilder()
+                        .connectTimeout(Duration.ofSeconds(2))
+                        .build(),
+                objectMapper
+        );
+        ModelSettings modelSettings = new ModelSettings(
+                "Anthropic",
+                "claude-test",
+                "http://localhost:11434",
+                "Auto",
+                "http://localhost:" + server.getAddress().getPort(),
+                "test-anthropic-key",
+                true,
+                8192,
+                888,
+                2
+        );
+
+        String result = ollamaClient.generateSimpleSummary(
+                SummaryType.TLDR,
+                "Paper content.",
+                modelSettings,
+                AppSettings.defaults().processing()
+        );
+
+        assertEquals("Anthropic summary", result);
+        assertEquals("test-anthropic-key", cloudHandler.apiKeyHeader);
+        assertEquals("2023-06-01", cloudHandler.anthropicVersionHeader);
+        JsonNode requestJson = objectMapper.readTree(cloudHandler.requests.get(0));
+        assertEquals("claude-test", requestJson.get("model").asText());
+        assertEquals(888, requestJson.get("max_tokens").asInt());
+        assertTrue(requestJson.hasNonNull("system"));
+        assertEquals("user", requestJson.get("messages").get(0).get("role").asText());
+    }
+
     private static class FakeOllamaHandler implements HttpHandler {
 
         private final List<String> requests = new ArrayList<>();
@@ -105,6 +203,33 @@ class OllamaClientSettingsTest {
                       "done": true
                     }
                     """.getBytes(StandardCharsets.UTF_8);
+            exchange.getResponseHeaders().add("Content-Type", "application/json");
+            exchange.sendResponseHeaders(200, responseBytes.length);
+            try (OutputStream outputStream = exchange.getResponseBody()) {
+                outputStream.write(responseBytes);
+            }
+        }
+    }
+
+    private static class CloudHandler implements HttpHandler {
+
+        private final List<String> requests = new ArrayList<>();
+        private final String responseBody;
+        private String authorizationHeader;
+        private String apiKeyHeader;
+        private String anthropicVersionHeader;
+
+        private CloudHandler(String responseBody) {
+            this.responseBody = responseBody;
+        }
+
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            authorizationHeader = exchange.getRequestHeaders().getFirst("Authorization");
+            apiKeyHeader = exchange.getRequestHeaders().getFirst("x-api-key");
+            anthropicVersionHeader = exchange.getRequestHeaders().getFirst("anthropic-version");
+            requests.add(new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8));
+            byte[] responseBytes = responseBody.getBytes(StandardCharsets.UTF_8);
             exchange.getResponseHeaders().add("Content-Type", "application/json");
             exchange.sendResponseHeaders(200, responseBytes.length);
             try (OutputStream outputStream = exchange.getResponseBody()) {

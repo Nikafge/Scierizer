@@ -69,6 +69,28 @@ class SummaryServiceSettingsTest {
         assertEquals("short paper text", Files.readString(temporaryDirectory.resolve("paper.pdf.txt")));
     }
 
+    @Test
+    void getSummaryAllowsCloudProviderSettings() throws Exception {
+        SettingsService settingsService = new SettingsService(tempDirectory);
+        settingsService.saveSettings(new AppSettings(
+                1,
+                new ModelSettings("OpenAI", "cloud-model", "http://localhost:11434", "Auto", "http://cloud.example", "api-key", true, 4096, 512, 3),
+                new ProcessingSettings("Auto", 6000, 500, SummaryType.TLDR, "English", true, true, false, false),
+                new StorageSettings("", "", "", "Markdown", false, false, false, true)
+        ));
+        FakeOllamaClient ollamaClient = new FakeOllamaClient();
+        SummaryService summaryService = new SummaryService(
+                new FakeTextExtractor("short paper text"),
+                ollamaClient,
+                new TextShredder(),
+                settingsService
+        );
+
+        assertEquals("simple summary", summaryService.getSummary("paper.pdf", SummaryType.TLDR));
+        assertEquals("OpenAI", ollamaClient.provider);
+        assertEquals("cloud-model", ollamaClient.modelName);
+    }
+
     private static class FakeTextExtractor extends TextExtractor {
         private final String content;
 
@@ -83,6 +105,7 @@ class SummaryServiceSettingsTest {
     }
 
     private static class FakeOllamaClient extends OllamaClient {
+        private String provider;
         private String modelName;
         private String chunkingMode;
         private int chunkCount;
@@ -94,6 +117,8 @@ class SummaryServiceSettingsTest {
                 ModelSettings modelSettings,
                 ProcessingSettings processingSettings
         ) {
+            this.provider = modelSettings.provider();
+            this.modelName = modelSettings.modelName();
             return "simple summary";
         }
 

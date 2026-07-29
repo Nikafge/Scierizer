@@ -20,6 +20,8 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
+import java.util.stream.Collectors;
 
 public class OllamaClient {
 
@@ -34,6 +36,44 @@ private record OllamaGenerateResponse(
         String response,
         boolean done
 ) {}
+    private record ChatMessage(
+            String role,
+            String content
+    ) {}
+    private record OpenAiChatRequest(
+            String model,
+            List<ChatMessage> messages,
+            int max_completion_tokens,
+            boolean stream
+    ) {}
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private record OpenAiChatResponse(
+            List<OpenAiChoice> choices
+    ) {}
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private record OpenAiChoice(
+            OpenAiMessage message
+    ) {}
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private record OpenAiMessage(
+            String content
+    ) {}
+    private record AnthropicMessageRequest(
+            String model,
+            String system,
+            List<ChatMessage> messages,
+            int max_tokens,
+            boolean stream
+    ) {}
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private record AnthropicMessageResponse(
+            List<AnthropicContentBlock> content
+    ) {}
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private record AnthropicContentBlock(
+            String type,
+            String text
+    ) {}
     private final String basicRequest = "You are summarizing a scientific paper. Follow these rules strictly:\n" +
             "- Use ONLY information explicitly present in the provided text. Do not add facts from general knowledge.\n" +
             "- Do NOT try to include formulas from paper. Only describe them\n" +
@@ -55,6 +95,16 @@ private record OllamaGenerateResponse(
     public OllamaClient(HttpClient httpClient, ObjectMapper objectMapper) {
         this.httpClient = httpClient;
         this.objectMapper = objectMapper;
+    }
+
+    private String getModelResponse(String request, ModelSettings modelSettings) {
+        return switch (normalizedProvider(modelSettings)) {
+            case "ollama" -> getOllamaResponse(request, modelSettings);
+            case "openai" -> getOpenAiCompatibleResponse(request, modelSettings, false);
+            case "custom" -> getOpenAiCompatibleResponse(request, modelSettings, true);
+            case "anthropic" -> getAnthropicResponse(request, modelSettings);
+            default -> throw new IllegalArgumentException("Unsupported model provider: " + modelSettings.provider());
+        };
     }
 
     //Method to send request to Ollama
@@ -96,6 +146,117 @@ private record OllamaGenerateResponse(
             throw new RuntimeException("Failed to establish connection with Ollama", e);
         } catch (IOException e) {
             throw new RuntimeException("Failed to establish connection with Ollama", e);
+        }
+    }
+
+    private String getOpenAiCompatibleResponse(String request, ModelSettings modelSettings, boolean customProvider) {
+        String providerName = customProvider ? "custom cloud provider" : "OpenAI";
+        OpenAiChatRequest chatRequest = new OpenAiChatRequest(
+                modelSettings.modelName(),
+                List.of(
+                        new ChatMessage("developer", basicRequest),
+                        new ChatMessage("user", request)
+                ),
+                Math.max(1, modelSettings.maxOutputTokens()),
+                false
+        );
+
+        try {
+            String requestBody = objectMapper.writeValueAsString(chatRequest);
+
+            HttpRequest httpRequest = HttpRequest.newBuilder()
+                    .uri(URI.create(generateOpenAiCompatibleEndpoint(modelSettings, customProvider)))
+                    .timeout(Duration.ofMinutes(Math.max(1, modelSettings.requestTimeoutMinutes())))
+                    .header("Content-Type", "application/json")
+                    .header("Authorization", "Bearer " + apiKey(
+                            modelSettings,
+                            customProvider ? "CLOUD_LLM_API_KEY" : "OPENAI_API_KEY",
+                            providerName
+                    ))
+                    .POST(HttpRequest.BodyPublishers.ofString(requestBody, StandardCharsets.UTF_8))
+                    .build();
+
+            HttpResponse<String> httpResponse = httpClient.send(
+                    httpRequest,
+                    HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8)
+            );
+
+            if (httpResponse.statusCode() < 200 || httpResponse.statusCode() >= 300) {
+                throw new RuntimeException(
+                        providerName + " returned status " + httpResponse.statusCode()
+                                + ": " + httpResponse.body()
+                );
+            }
+
+            OpenAiChatResponse chatResponse =
+                    objectMapper.readValue(httpResponse.body(), OpenAiChatResponse.class);
+
+            if (chatResponse.choices() == null
+                    || chatResponse.choices().isEmpty()
+                    || chatResponse.choices().get(0).message() == null
+                    || chatResponse.choices().get(0).message().content() == null) {
+                throw new RuntimeException(providerName + " response did not include message content");
+            }
+
+            return chatResponse.choices().get(0).message().content().trim();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("Failed to establish connection with " + providerName, e);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to establish connection with " + providerName, e);
+        }
+    }
+
+    private String getAnthropicResponse(String request, ModelSettings modelSettings) {
+        AnthropicMessageRequest messageRequest = new AnthropicMessageRequest(
+                modelSettings.modelName(),
+                basicRequest,
+                List.of(new ChatMessage("user", request)),
+                Math.max(1, modelSettings.maxOutputTokens()),
+                false
+        );
+
+        try {
+            String requestBody = objectMapper.writeValueAsString(messageRequest);
+
+            HttpRequest httpRequest = HttpRequest.newBuilder()
+                    .uri(URI.create(generateAnthropicEndpoint(modelSettings)))
+                    .timeout(Duration.ofMinutes(Math.max(1, modelSettings.requestTimeoutMinutes())))
+                    .header("Content-Type", "application/json")
+                    .header("x-api-key", apiKey(modelSettings, "ANTHROPIC_API_KEY", "Anthropic"))
+                    .header("anthropic-version", "2023-06-01")
+                    .POST(HttpRequest.BodyPublishers.ofString(requestBody, StandardCharsets.UTF_8))
+                    .build();
+
+            HttpResponse<String> httpResponse = httpClient.send(
+                    httpRequest,
+                    HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8)
+            );
+
+            if (httpResponse.statusCode() < 200 || httpResponse.statusCode() >= 300) {
+                throw new RuntimeException(
+                        "Anthropic returned status " + httpResponse.statusCode()
+                                + ": " + httpResponse.body()
+                );
+            }
+
+            AnthropicMessageResponse messageResponse =
+                    objectMapper.readValue(httpResponse.body(), AnthropicMessageResponse.class);
+
+            if (messageResponse.content() == null || messageResponse.content().isEmpty()) {
+                throw new RuntimeException("Anthropic response did not include message content");
+            }
+
+            return messageResponse.content().stream()
+                    .filter(block -> block.text() != null)
+                    .map(AnthropicContentBlock::text)
+                    .collect(Collectors.joining("\n"))
+                    .trim();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("Failed to establish connection with Anthropic", e);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to establish connection with Anthropic", e);
         }
     }
 
@@ -171,7 +332,7 @@ private record OllamaGenerateResponse(
             default:
                 throw new IllegalArgumentException("Unsupported summary type");
         }
-        return getOllamaResponse(
+        return getModelResponse(
                 appendProcessingInstructions(specificRequest, processingSettings).replace("{paper_text}", content),
                 modelSettings
         );
@@ -248,7 +409,7 @@ private record OllamaGenerateResponse(
                 mapRequest = appendProcessingInstructions(mapRequest, processingSettings);
 
                 for (int i = 1; i <= paperChapters.size(); i++) {
-                    chunks.add(getOllamaResponse((mapRequest.replace("{chunk_number}", String.valueOf(i))).replace("{chunk_text}", paperChapters.get(i-1)), modelSettings));
+                    chunks.add(getModelResponse((mapRequest.replace("{chunk_number}", String.valueOf(i))).replace("{chunk_text}", paperChapters.get(i-1)), modelSettings));
                 }
 
         return chunks;
@@ -314,7 +475,7 @@ private record OllamaGenerateResponse(
         if (reducePrompt.isEmpty()) {
             return String.join("\n", chunks);
         }
-        return getOllamaResponse(
+        return getModelResponse(
                 appendProcessingInstructions(reducePrompt, processingSettings)
                         .replace("{combined_map_outputs}", String.join("\n", chunks)),
                 modelSettings
@@ -333,6 +494,63 @@ private record OllamaGenerateResponse(
         }
 
         return withoutTrailingSlash + "/api/generate";
+    }
+
+    private String generateOpenAiCompatibleEndpoint(ModelSettings modelSettings, boolean customProvider) {
+        String configuredEndpoint = modelSettings.cloudEndpoint();
+        if (configuredEndpoint == null || configuredEndpoint.isBlank()) {
+            if (customProvider) {
+                throw new IllegalArgumentException("Cloud endpoint is required for Custom provider");
+            }
+            configuredEndpoint = "https://api.openai.com/v1/chat/completions";
+        }
+
+        String withoutTrailingSlash = configuredEndpoint.trim().replaceAll("/+$", "");
+        if (withoutTrailingSlash.endsWith("/chat/completions")) {
+            return withoutTrailingSlash;
+        }
+        if (withoutTrailingSlash.endsWith("/v1")) {
+            return withoutTrailingSlash + "/chat/completions";
+        }
+        return withoutTrailingSlash + "/v1/chat/completions";
+    }
+
+    private String generateAnthropicEndpoint(ModelSettings modelSettings) {
+        String configuredEndpoint = modelSettings.cloudEndpoint();
+        if (configuredEndpoint == null || configuredEndpoint.isBlank()) {
+            configuredEndpoint = "https://api.anthropic.com/v1/messages";
+        }
+
+        String withoutTrailingSlash = configuredEndpoint.trim().replaceAll("/+$", "");
+        if (withoutTrailingSlash.endsWith("/messages")) {
+            return withoutTrailingSlash;
+        }
+        if (withoutTrailingSlash.endsWith("/v1")) {
+            return withoutTrailingSlash + "/messages";
+        }
+        return withoutTrailingSlash + "/v1/messages";
+    }
+
+    private String apiKey(ModelSettings modelSettings, String environmentVariableName, String providerName) {
+        String configuredKey = modelSettings.apiKeyReference();
+        if (configuredKey != null && !configuredKey.isBlank()) {
+            return configuredKey.trim();
+        }
+
+        String environmentKey = System.getenv(environmentVariableName);
+        if (environmentKey != null && !environmentKey.isBlank()) {
+            return environmentKey.trim();
+        }
+
+        throw new IllegalArgumentException(providerName + " API key is required. Enter it in Settings or set "
+                + environmentVariableName + ".");
+    }
+
+    private String normalizedProvider(ModelSettings modelSettings) {
+        String provider = modelSettings.provider();
+        return provider == null || provider.isBlank()
+                ? "ollama"
+                : provider.trim().toLowerCase(Locale.ROOT);
     }
 
     private String appendProcessingInstructions(String prompt, ProcessingSettings processingSettings) {

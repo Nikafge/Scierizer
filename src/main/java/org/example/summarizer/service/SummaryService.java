@@ -49,10 +49,6 @@ public class SummaryService {
         ModelSettings modelSettings = settings.model();
         ProcessingSettings processingSettings = settings.processing();
 
-        if (!"Ollama".equalsIgnoreCase(modelSettings.provider())) {
-            throw new IllegalArgumentException("Only Ollama provider is currently supported");
-        }
-
         Optional<String> content;
         if (url.contains("http://") || url.contains("https://")) {
             content = textExtractor.extractFromUrl(url);
