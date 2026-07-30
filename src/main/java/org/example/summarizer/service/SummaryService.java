@@ -49,12 +49,7 @@ public class SummaryService {
         ModelSettings modelSettings = settings.model();
         ProcessingSettings processingSettings = settings.processing();
 
-        Optional<String> content;
-        if (url.contains("http://") || url.contains("https://")) {
-            content = textExtractor.extractFromUrl(url);
-        } else {
-            content = textExtractor.extractFromPath(Path.of(url));
-        }
+        Optional<String> content = extractContent(url, modelSettings, processingSettings);
         if (content.isEmpty())
             throw new IllegalArgumentException("No text was extracted from paper");
 
@@ -87,6 +82,30 @@ public class SummaryService {
     ) {
         return !"Manual".equalsIgnoreCase(processingSettings.chunkingMode())
                 && isNotTooLong(content, modelSettings);
+    }
+
+    private Optional<String> extractContent(
+            String source,
+            ModelSettings modelSettings,
+            ProcessingSettings processingSettings
+    ) throws IOException, InterruptedException {
+        boolean sourceIsUrl = source.contains("http://") || source.contains("https://");
+        if (usesUnlimitedOcr(processingSettings)) {
+            if (sourceIsUrl) {
+                return textExtractor.extractFromUrlWithUnlimitedOcr(source, ollamaClient, modelSettings);
+            }
+            return textExtractor.extractFromPathWithUnlimitedOcr(Path.of(source), ollamaClient, modelSettings);
+        }
+
+        if (sourceIsUrl) {
+            return textExtractor.extractFromUrl(source);
+        }
+        return textExtractor.extractFromPath(Path.of(source));
+    }
+
+    private boolean usesUnlimitedOcr(ProcessingSettings processingSettings) {
+        String parsingMethod = processingSettings.parsingMethod();
+        return parsingMethod != null && "unlimited-ocr".equalsIgnoreCase(parsingMethod.trim());
     }
 
     private List<String> chunkContent(String content, ProcessingSettings processingSettings) {

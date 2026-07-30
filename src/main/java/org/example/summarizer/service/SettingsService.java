@@ -91,6 +91,7 @@ public class SettingsService {
         }
 
         return new ProcessingSettings(
+                textOrDefault(settings.parsingMethod(), defaults.parsingMethod()),
                 textOrDefault(settings.chunkingMode(), defaults.chunkingMode()),
                 positiveOrDefault(settings.chunkSizeTokens(), defaults.chunkSizeTokens()),
                 Math.max(0, settings.chunkOverlapTokens()),

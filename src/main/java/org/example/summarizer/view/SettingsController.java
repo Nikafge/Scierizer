@@ -1,6 +1,7 @@
 package org.example.summarizer.view;
 
 import javafx.collections.FXCollections;
+import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
@@ -18,6 +19,7 @@ import org.example.summarizer.domain.settings.AppSettings;
 import org.example.summarizer.domain.settings.ModelSettings;
 import org.example.summarizer.domain.settings.ProcessingSettings;
 import org.example.summarizer.domain.settings.StorageSettings;
+import org.example.summarizer.infrastructure.ollama.OllamaClient;
 import org.example.summarizer.service.NavigationService;
 import org.example.summarizer.service.SettingsService;
 import org.example.summarizer.viewmodel.SummaryType;
@@ -29,6 +31,7 @@ import java.util.Objects;
 public class SettingsController {
 
     private SettingsService settingsService;
+    private final OllamaClient ollamaClient = new OllamaClient();
 
     @FXML
     private TopNavigationController topNavigationController;
@@ -71,6 +74,8 @@ public class SettingsController {
     private Button testConnectionButton;
     @FXML
     private Label connectionStatusLabel;
+    @FXML
+    private ComboBox<String> parsingMethodComboBox;
     @FXML
     private ComboBox<String> chunkingModeComboBox;
     @FXML
@@ -141,6 +146,7 @@ public class SettingsController {
         providerComboBox.setItems(FXCollections.observableArrayList("Ollama", "OpenAI", "Anthropic", "Custom"));
         modelComboBox.setItems(FXCollections.observableArrayList("qwen3:8b", "gemma3:4b", "llama3.1:8b"));
         contextModeComboBox.setItems(FXCollections.observableArrayList("Auto", "Manual"));
+        parsingMethodComboBox.setItems(FXCollections.observableArrayList("Auto", "Unlimited-OCR"));
         chunkingModeComboBox.setItems(FXCollections.observableArrayList("Auto", "Manual"));
         defaultSummaryTypeComboBox.setItems(FXCollections.observableArrayList(Arrays.asList(SummaryType.values())));
         outputLanguageComboBox.setItems(FXCollections.observableArrayList("English", "German", "French", "Spanish"));
@@ -170,7 +176,7 @@ public class SettingsController {
 
         refreshModelsButton.setOnAction(event -> setConnectionStatus("Model refresh is not available yet."));
         detectVramButton.setOnAction(event -> detectedVramLabel.setText("Not detected"));
-        testConnectionButton.setOnAction(event -> setConnectionStatus("Connection test is not available yet."));
+        testConnectionButton.setOnAction(event -> testConnection());
     }
 
     private void loadSettings() {
@@ -194,6 +200,10 @@ public class SettingsController {
     }
 
     private AppSettings readSettingsFromControls() {
+        return readSettingsFromControls(false);
+    }
+
+    private AppSettings readSettingsFromControls(boolean includeEnteredApiKey) {
         return new AppSettings(
                 AppSettings.defaults().version(),
                 new ModelSettings(
@@ -202,13 +212,14 @@ public class SettingsController {
                         textValue(ollamaBaseUrlField, "http://localhost:11434"),
                         comboValue(contextModeComboBox, "Auto"),
                         textValue(cloudEndpointField, ""),
-                        rememberApiKeyCheckBox.isSelected() ? textValue(apiKeyField, "") : "",
+                        rememberApiKeyCheckBox.isSelected() || includeEnteredApiKey ? textValue(apiKeyField, "") : "",
                         rememberApiKeyCheckBox.isSelected(),
                         spinnerValue(contextTokensSpinner),
                         spinnerValue(maxOutputTokensSpinner),
                         spinnerValue(requestTimeoutMinutesSpinner)
                 ),
                 new ProcessingSettings(
+                        comboValue(parsingMethodComboBox, "Auto"),
                         comboValue(chunkingModeComboBox, "Auto"),
                         spinnerValue(chunkSizeTokensSpinner),
                         spinnerValue(chunkOverlapTokensSpinner),
@@ -248,6 +259,7 @@ public class SettingsController {
         setSpinnerValue(requestTimeoutMinutesSpinner, model.requestTimeoutMinutes());
 
         ProcessingSettings processing = settings.processing();
+        parsingMethodComboBox.setValue(processing.parsingMethod());
         chunkingModeComboBox.setValue(processing.chunkingMode());
         setSpinnerValue(chunkSizeTokensSpinner, processing.chunkSizeTokens());
         setSpinnerValue(chunkOverlapTokensSpinner, processing.chunkOverlapTokens());
@@ -282,6 +294,38 @@ public class SettingsController {
         if (selectedDirectory != null) {
             targetField.setText(selectedDirectory.getAbsolutePath());
         }
+    }
+
+    private void testConnection() {
+        AppSettings settings = readSettingsFromControls(true);
+        setConnectionStatus("Testing connection...");
+        testConnectionButton.setDisable(true);
+
+        Task<OllamaClient.ConnectionTestResult> task = new Task<>() {
+            @Override
+            protected OllamaClient.ConnectionTestResult call() {
+                return ollamaClient.testConnection(settings.model(), settings.processing());
+            }
+        };
+
+        task.setOnSucceeded(event -> {
+            OllamaClient.ConnectionTestResult result = task.getValue();
+            setConnectionStatus((result.successful() ? "Success: " : "Failed: ") + result.message());
+            testConnectionButton.setDisable(false);
+        });
+
+        task.setOnFailed(event -> {
+            Throwable error = task.getException();
+            String message = error == null || error.getMessage() == null
+                    ? "Connection test failed."
+                    : error.getMessage();
+            setConnectionStatus("Failed: " + message);
+            testConnectionButton.setDisable(false);
+        });
+
+        Thread thread = new Thread(task, "settings-connection-test");
+        thread.setDaemon(true);
+        thread.start();
     }
 
     private Window ownerWindow() {

@@ -5,6 +5,7 @@ module org.example.summarizer {
     requires org.xerial.sqlitejdbc;
     requires org.kordamp.bootstrapfx.core;
     requires java.net.http;
+    requires java.desktop;
     requires org.apache.pdfbox;
     requires org.apache.pdfbox.io;
     requires com.fasterxml.jackson.databind;

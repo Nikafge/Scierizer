@@ -291,22 +291,31 @@
                                        <ColumnConstraints hgrow="ALWAYS"/>
                                     </columnConstraints>
 
-                                    <Label text="Chunking policy:"
+                                    <Label text="Parsing method:"
                                            GridPane.columnIndex="0"
                                            GridPane.rowIndex="0"/>
-                                    <ComboBox fx:id="chunkingModeComboBox"
+                                    <ComboBox fx:id="parsingMethodComboBox"
                                               promptText="Auto"
                                               maxWidth="1.7976931348623157E308"
                                               GridPane.columnIndex="1"
                                               GridPane.rowIndex="0"/>
 
-                                    <Label text="Chunk size:"
+                                    <Label text="Chunking policy:"
                                            GridPane.columnIndex="0"
                                            GridPane.rowIndex="1"/>
+                                    <ComboBox fx:id="chunkingModeComboBox"
+                                              promptText="Auto"
+                                              maxWidth="1.7976931348623157E308"
+                                              GridPane.columnIndex="1"
+                                              GridPane.rowIndex="1"/>
+
+                                    <Label text="Chunk size:"
+                                           GridPane.columnIndex="0"
+                                           GridPane.rowIndex="2"/>
                                     <HBox spacing="8.0"
                                           alignment="CENTER_LEFT"
                                           GridPane.columnIndex="1"
-                                          GridPane.rowIndex="1">
+                                          GridPane.rowIndex="2">
                                        <Spinner fx:id="chunkSizeTokensSpinner"
                                                 editable="true"
                                                 prefWidth="160.0"/>
@@ -315,11 +324,11 @@
 
                                     <Label text="Chunk overlap:"
                                            GridPane.columnIndex="0"
-                                           GridPane.rowIndex="2"/>
+                                           GridPane.rowIndex="3"/>
                                     <HBox spacing="8.0"
                                           alignment="CENTER_LEFT"
                                           GridPane.columnIndex="1"
-                                          GridPane.rowIndex="2">
+                                          GridPane.rowIndex="3">
                                        <Spinner fx:id="chunkOverlapTokensSpinner"
                                                 editable="true"
                                                 prefWidth="160.0"/>
@@ -330,7 +339,7 @@
                                            wrapText="true"
                                            style="-fx-text-fill: #666666;"
                                            GridPane.columnIndex="1"
-                                           GridPane.rowIndex="3"/>
+                                           GridPane.rowIndex="4"/>
                                  </GridPane>
                               </content>
                            </TitledPane>

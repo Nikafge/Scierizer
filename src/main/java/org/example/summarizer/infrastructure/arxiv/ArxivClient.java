@@ -20,7 +20,13 @@ public class ArxivClient {
     private String baseUrl = "https://export.arxiv.org/api/query?search_query=";
 
     public List<Paper> paperResponse(String parameters) throws IOException, InterruptedException {
-        String resultingUrl = baseUrl + parameters;
+        return paperResponse(parameters, 0, 20);
+    }
+
+    public List<Paper> paperResponse(String parameters, int start, int maxResults) throws IOException, InterruptedException {
+        String resultingUrl = baseUrl + parameters
+                + "&start=" + Math.max(0, start)
+                + "&max_results=" + Math.max(1, maxResults);
         System.out.println(resultingUrl);
 
         HttpClient httpClient = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
@@ -35,7 +41,7 @@ public class ArxivClient {
 
 
             //Parse response as list of strings, write them in a separate list as Papers
-            List<String> papersAsStrings = StringToListConverter(response.body());
+            List<String> papersAsStrings = StringToListConverter(response.body(), maxResults);
             List<Paper> resultingPapers = new ArrayList<>();
 
             for(String paperAsString : papersAsStrings) {
@@ -52,13 +58,17 @@ public class ArxivClient {
 
     //Converts a single string to a list of strings for different papers
     public List<String> StringToListConverter (String apiResponse) {
+        return StringToListConverter(apiResponse, 20);
+    }
+
+    public List<String> StringToListConverter (String apiResponse, int maxResults) {
 
         Pattern pattern = Pattern.compile("<entry[^>]*>(.*?)</entry>", Pattern.DOTALL);
         Matcher matcher = pattern.matcher(apiResponse);
         List<String> papersAsStrings =  new ArrayList<>();
         int i = 0;
 
-        while(matcher.find() && i < 20) {
+        while(matcher.find() && i < maxResults) {
             papersAsStrings.add(matcher.group());
             i++;
         }

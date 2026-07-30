@@ -25,6 +25,7 @@ public record AppSettings(
                 ),
                 new ProcessingSettings(
                         "Auto",
+                        "Auto",
                         6000,
                         500,
                         SummaryType.STRUCTURED,

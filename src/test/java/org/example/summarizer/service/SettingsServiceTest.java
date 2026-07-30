@@ -45,6 +45,7 @@ class SettingsServiceTest {
                         15
                 ),
                 new ProcessingSettings(
+                        "Unlimited-OCR",
                         "Manual",
                         8000,
                         750,
@@ -72,6 +73,7 @@ class SettingsServiceTest {
         Path settingsFilePath = tempDirectory.resolve("settings.json");
         assertTrue(Files.exists(settingsFilePath));
         assertTrue(Files.readString(settingsFilePath).contains("\"modelName\" : \"llama3.1:8b\""));
+        assertTrue(Files.readString(settingsFilePath).contains("\"parsingMethod\" : \"Unlimited-OCR\""));
         assertEquals(settings, settingsService.loadSettings());
     }
 }

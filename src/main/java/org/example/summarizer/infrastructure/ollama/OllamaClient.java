@@ -3,6 +3,7 @@ package org.example.summarizer.infrastructure.ollama;
 
 import org.example.summarizer.viewmodel.SummaryType;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.MappingIterator;
 
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -11,7 +12,10 @@ import org.example.summarizer.domain.settings.ModelSettings;
 import org.example.summarizer.domain.settings.ProcessingSettings;
 
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -21,9 +25,11 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class OllamaClient {
+    public static final String UNLIMITED_OCR_MODEL = "frob/unlimited-ocr:q8_0";
 
     private record OllamaGenerateRequest(
             String model,
@@ -36,6 +42,37 @@ private record OllamaGenerateResponse(
         String response,
         boolean done
 ) {}
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private record OllamaTagsResponse(
+            List<OllamaModelEntry> models
+    ) {}
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private record OllamaModelEntry(
+            String name,
+            String model
+    ) {}
+    private record OllamaChatRequest(
+            String model,
+            List<OllamaChatMessage> messages,
+            boolean stream,
+            Map<String, Object> options,
+            String keep_alive
+    ) {}
+    private record OllamaChatMessage(
+            String role,
+            String content,
+            List<String> images
+    ) {}
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private record OllamaChatResponse(
+            OllamaChatResponseMessage message,
+            boolean done
+    ) {}
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private record OllamaChatResponseMessage(
+            String role,
+            String content
+    ) {}
     private record ChatMessage(
             String role,
             String content
@@ -97,6 +134,35 @@ private record OllamaGenerateResponse(
         this.objectMapper = objectMapper;
     }
 
+    public record ConnectionTestResult(
+            boolean successful,
+            String message
+    ) {}
+
+    public ConnectionTestResult testConnection(ModelSettings modelSettings, ProcessingSettings processingSettings) {
+        try {
+            String provider = normalizedProvider(modelSettings);
+            String providerMessage = switch (provider) {
+                case "ollama" -> testOllamaConnection(modelSettings);
+                case "openai" -> testOpenAiCompatibleConnection(modelSettings, false);
+                case "custom" -> testOpenAiCompatibleConnection(modelSettings, true);
+                case "anthropic" -> testAnthropicConnection(modelSettings);
+                default -> throw new IllegalArgumentException("Unsupported model provider: " + modelSettings.provider());
+            };
+
+            String ocrMessage = "";
+            if (usesUnlimitedOcr(processingSettings)
+                    && !sameOllamaModel(modelNameOrDefault(modelSettings), UNLIMITED_OCR_MODEL)) {
+                ensureOllamaModelAvailable(modelSettings, UNLIMITED_OCR_MODEL);
+                ocrMessage = " Unlimited-OCR model is available.";
+            }
+
+            return new ConnectionTestResult(true, providerMessage + ocrMessage);
+        } catch (RuntimeException e) {
+            return new ConnectionTestResult(false, rootMessage(e));
+        }
+    }
+
     private String getModelResponse(String request, ModelSettings modelSettings) {
         return switch (normalizedProvider(modelSettings)) {
             case "ollama" -> getOllamaResponse(request, modelSettings);
@@ -147,6 +213,248 @@ private record OllamaGenerateResponse(
         } catch (IOException e) {
             throw new RuntimeException("Failed to establish connection with Ollama", e);
         }
+    }
+
+    private String testOllamaConnection(ModelSettings modelSettings) {
+        ensureOllamaModelAvailable(modelSettings, modelNameOrDefault(modelSettings));
+        return "Connected to Ollama. Model is available.";
+    }
+
+    private void ensureOllamaModelAvailable(ModelSettings modelSettings, String requiredModel) {
+        try {
+            HttpRequest httpRequest = HttpRequest.newBuilder()
+                    .uri(URI.create(generateTagsEndpoint(modelSettings.ollamaBaseUrl())))
+                    .timeout(connectionTestTimeout(modelSettings))
+                    .GET()
+                    .build();
+
+            HttpResponse<String> httpResponse = httpClient.send(
+                    httpRequest,
+                    HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8)
+            );
+
+            if (httpResponse.statusCode() != 200) {
+                throw new RuntimeException(
+                        "Ollama returned status " + httpResponse.statusCode()
+                                + ": " + httpResponse.body()
+                );
+            }
+
+            OllamaTagsResponse tagsResponse = objectMapper.readValue(httpResponse.body(), OllamaTagsResponse.class);
+            if (!hasOllamaModel(tagsResponse, requiredModel)) {
+                throw new RuntimeException(
+                        "Ollama is reachable, but model " + requiredModel
+                                + " is not installed. Run: ollama pull " + requiredModel
+                );
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("Failed to establish connection with Ollama", e);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to establish connection with Ollama", e);
+        }
+    }
+
+    private String testOpenAiCompatibleConnection(ModelSettings modelSettings, boolean customProvider) {
+        String providerName = customProvider ? "custom cloud provider" : "OpenAI";
+        OpenAiChatRequest chatRequest = new OpenAiChatRequest(
+                modelNameOrDefault(modelSettings),
+                List.of(
+                        new ChatMessage("developer", "You are a connection test endpoint."),
+                        new ChatMessage("user", "Reply with OK.")
+                ),
+                Math.min(Math.max(1, modelSettings.maxOutputTokens()), 16),
+                false
+        );
+
+        try {
+            String requestBody = objectMapper.writeValueAsString(chatRequest);
+            HttpRequest httpRequest = HttpRequest.newBuilder()
+                    .uri(URI.create(generateOpenAiCompatibleEndpoint(modelSettings, customProvider)))
+                    .timeout(connectionTestTimeout(modelSettings))
+                    .header("Content-Type", "application/json")
+                    .header("Authorization", "Bearer " + apiKey(
+                            modelSettings,
+                            customProvider ? "CLOUD_LLM_API_KEY" : "OPENAI_API_KEY",
+                            providerName
+                    ))
+                    .POST(HttpRequest.BodyPublishers.ofString(requestBody, StandardCharsets.UTF_8))
+                    .build();
+
+            HttpResponse<String> httpResponse = httpClient.send(
+                    httpRequest,
+                    HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8)
+            );
+
+            if (httpResponse.statusCode() < 200 || httpResponse.statusCode() >= 300) {
+                throw new RuntimeException(
+                        providerName + " returned status " + httpResponse.statusCode()
+                                + ": " + httpResponse.body()
+                );
+            }
+
+            OpenAiChatResponse chatResponse =
+                    objectMapper.readValue(httpResponse.body(), OpenAiChatResponse.class);
+            if (chatResponse.choices() == null
+                    || chatResponse.choices().isEmpty()
+                    || chatResponse.choices().get(0).message() == null
+                    || chatResponse.choices().get(0).message().content() == null) {
+                throw new RuntimeException(providerName + " response did not include message content");
+            }
+
+            return "Connected to " + providerName + ". Model responded.";
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("Failed to establish connection with " + providerName, e);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to establish connection with " + providerName, e);
+        }
+    }
+
+    private String testAnthropicConnection(ModelSettings modelSettings) {
+        AnthropicMessageRequest messageRequest = new AnthropicMessageRequest(
+                modelNameOrDefault(modelSettings),
+                "You are a connection test endpoint.",
+                List.of(new ChatMessage("user", "Reply with OK.")),
+                Math.min(Math.max(1, modelSettings.maxOutputTokens()), 16),
+                false
+        );
+
+        try {
+            String requestBody = objectMapper.writeValueAsString(messageRequest);
+            HttpRequest httpRequest = HttpRequest.newBuilder()
+                    .uri(URI.create(generateAnthropicEndpoint(modelSettings)))
+                    .timeout(connectionTestTimeout(modelSettings))
+                    .header("Content-Type", "application/json")
+                    .header("x-api-key", apiKey(modelSettings, "ANTHROPIC_API_KEY", "Anthropic"))
+                    .header("anthropic-version", "2023-06-01")
+                    .POST(HttpRequest.BodyPublishers.ofString(requestBody, StandardCharsets.UTF_8))
+                    .build();
+
+            HttpResponse<String> httpResponse = httpClient.send(
+                    httpRequest,
+                    HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8)
+            );
+
+            if (httpResponse.statusCode() < 200 || httpResponse.statusCode() >= 300) {
+                throw new RuntimeException(
+                        "Anthropic returned status " + httpResponse.statusCode()
+                                + ": " + httpResponse.body()
+                );
+            }
+
+            AnthropicMessageResponse messageResponse =
+                    objectMapper.readValue(httpResponse.body(), AnthropicMessageResponse.class);
+            if (messageResponse.content() == null || messageResponse.content().isEmpty()) {
+                throw new RuntimeException("Anthropic response did not include message content");
+            }
+
+            return "Connected to Anthropic. Model responded.";
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("Failed to establish connection with Anthropic", e);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to establish connection with Anthropic", e);
+        }
+    }
+
+    public String extractTextFromImage(String base64Image, int pageNumber, ModelSettings modelSettings) {
+        String prompt = "ocr [img]\n"
+                + "Return only the recognized document text for page " + pageNumber + ". "
+                + "Preserve reading order. Preserve tables as Markdown tables when possible. "
+                + "Preserve formulas as plain text or LaTeX-like text when present.";
+        OllamaChatRequest ollamaRequest = new OllamaChatRequest(
+                UNLIMITED_OCR_MODEL,
+                List.of(new OllamaChatMessage("user", prompt, List.of(base64Image))),
+                true,
+                Map.of("temperature", 0, "num_predict", 8192),
+                "30m"
+        );
+
+        try {
+            String requestBody = objectMapper.writeValueAsString(ollamaRequest);
+
+            HttpRequest httpRequest = HttpRequest.newBuilder()
+                    .uri(URI.create(generateChatEndpoint(modelSettings.ollamaBaseUrl())))
+                    .timeout(Duration.ofMinutes(Math.max(30, modelSettings.requestTimeoutMinutes())))
+                    .header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(requestBody, StandardCharsets.UTF_8))
+                    .build();
+
+            HttpResponse<InputStream> httpResponse = httpClient.send(
+                    httpRequest,
+                    HttpResponse.BodyHandlers.ofInputStream()
+            );
+
+            if (httpResponse.statusCode() != 200) {
+                try (InputStream errorBody = httpResponse.body()) {
+                    throw new RuntimeException(
+                            "Ollama Unlimited-OCR returned status " + httpResponse.statusCode()
+                                    + ": " + new String(errorBody.readAllBytes(), StandardCharsets.UTF_8)
+                    );
+                }
+            }
+
+            String responseText = readStreamingChatResponse(httpResponse.body());
+            if (responseText.isBlank()) {
+                throw new RuntimeException("Ollama Unlimited-OCR response did not include message content");
+            }
+
+            return cleanOcrText(responseText);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("Failed to establish connection with Ollama Unlimited-OCR", e);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to establish connection with Ollama Unlimited-OCR", e);
+        }
+    }
+
+    private String readStreamingChatResponse(InputStream responseBody) throws IOException {
+        StringBuilder text = new StringBuilder();
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(responseBody, StandardCharsets.UTF_8));
+             MappingIterator<OllamaChatResponse> responses = objectMapper
+                     .readerFor(OllamaChatResponse.class)
+                     .readValues(reader)) {
+            while (responses.hasNextValue()) {
+                OllamaChatResponse response = responses.nextValue();
+                if (response.message() != null && response.message().content() != null) {
+                    text.append(response.message().content());
+                }
+            }
+        }
+        return text.toString();
+    }
+
+    private String cleanOcrText(String rawText) {
+        String withoutTags = rawText
+                .replaceAll("<\\|det\\|>.*?<\\|/det\\|>", "")
+                .replaceAll("<\\|/?ref\\|>", "")
+                .replaceAll("<\\|/?.*?\\|>", "");
+        String[] lines = withoutTags.split("\\R");
+        StringBuilder cleaned = new StringBuilder();
+
+        for (String line : lines) {
+            String normalizedLine = line
+                    .replaceFirst("(?i)^\\s*(?:title|header|footer|text|paragraph|caption|formula|table|list)\\s*\\[[\\d\\s,.-]+]\\s*", "")
+                    .stripTrailing();
+
+            if (normalizedLine.matches("(?i)^\\s*(?:image|figure|separator)\\s*\\[[\\d\\s,.-]+]\\s*$")) {
+                continue;
+            }
+            if (normalizedLine.isBlank()) {
+                if (cleaned.length() > 0 && cleaned.charAt(cleaned.length() - 1) != '\n') {
+                    cleaned.append('\n');
+                }
+                continue;
+            }
+
+            if (cleaned.length() > 0 && cleaned.charAt(cleaned.length() - 1) != '\n') {
+                cleaned.append('\n');
+            }
+            cleaned.append(normalizedLine.stripLeading());
+        }
+
+        return cleaned.toString().trim();
     }
 
     private String getOpenAiCompatibleResponse(String request, ModelSettings modelSettings, boolean customProvider) {
@@ -496,6 +804,44 @@ private record OllamaGenerateResponse(
         return withoutTrailingSlash + "/api/generate";
     }
 
+    private String generateChatEndpoint(String baseUrl) {
+        String effectiveBaseUrl = baseUrl == null || baseUrl.isBlank()
+                ? AppSettings.defaults().model().ollamaBaseUrl()
+                : baseUrl.trim();
+        String withoutTrailingSlash = effectiveBaseUrl.replaceAll("/+$", "");
+
+        if (withoutTrailingSlash.endsWith("/api/chat")) {
+            return withoutTrailingSlash;
+        }
+        if (withoutTrailingSlash.endsWith("/api/generate")) {
+            return withoutTrailingSlash.substring(0, withoutTrailingSlash.length() - "/api/generate".length())
+                    + "/api/chat";
+        }
+
+        return withoutTrailingSlash + "/api/chat";
+    }
+
+    private String generateTagsEndpoint(String baseUrl) {
+        String effectiveBaseUrl = baseUrl == null || baseUrl.isBlank()
+                ? AppSettings.defaults().model().ollamaBaseUrl()
+                : baseUrl.trim();
+        String withoutTrailingSlash = effectiveBaseUrl.replaceAll("/+$", "");
+
+        if (withoutTrailingSlash.endsWith("/api/tags")) {
+            return withoutTrailingSlash;
+        }
+        if (withoutTrailingSlash.endsWith("/api/generate")) {
+            return withoutTrailingSlash.substring(0, withoutTrailingSlash.length() - "/api/generate".length())
+                    + "/api/tags";
+        }
+        if (withoutTrailingSlash.endsWith("/api/chat")) {
+            return withoutTrailingSlash.substring(0, withoutTrailingSlash.length() - "/api/chat".length())
+                    + "/api/tags";
+        }
+
+        return withoutTrailingSlash + "/api/tags";
+    }
+
     private String generateOpenAiCompatibleEndpoint(ModelSettings modelSettings, boolean customProvider) {
         String configuredEndpoint = modelSettings.cloudEndpoint();
         if (configuredEndpoint == null || configuredEndpoint.isBlank()) {
@@ -551,6 +897,64 @@ private record OllamaGenerateResponse(
         return provider == null || provider.isBlank()
                 ? "ollama"
                 : provider.trim().toLowerCase(Locale.ROOT);
+    }
+
+    private String modelNameOrDefault(ModelSettings modelSettings) {
+        String modelName = modelSettings.modelName();
+        return modelName == null || modelName.isBlank()
+                ? AppSettings.defaults().model().modelName()
+                : modelName.trim();
+    }
+
+    private boolean hasOllamaModel(OllamaTagsResponse tagsResponse, String requiredModel) {
+        if (tagsResponse.models() == null || tagsResponse.models().isEmpty()) {
+            return false;
+        }
+
+        String normalizedRequiredModel = normalizedModelName(requiredModel);
+        return tagsResponse.models().stream()
+                .anyMatch(model -> normalizedRequiredModel.equals(normalizedModelName(model.name()))
+                        || normalizedRequiredModel.equals(normalizedModelName(model.model())));
+    }
+
+    private String normalizedModelName(String modelName) {
+        if (modelName == null || modelName.isBlank()) {
+            return "";
+        }
+        String normalized = modelName.trim().toLowerCase(Locale.ROOT);
+        if (!normalized.contains(":")) {
+            normalized += ":latest";
+        }
+        return normalized;
+    }
+
+    private boolean sameOllamaModel(String firstModelName, String secondModelName) {
+        return normalizedModelName(firstModelName).equals(normalizedModelName(secondModelName));
+    }
+
+    private boolean usesUnlimitedOcr(ProcessingSettings processingSettings) {
+        if (processingSettings == null) {
+            return false;
+        }
+        String parsingMethod = processingSettings.parsingMethod();
+        return parsingMethod != null && "unlimited-ocr".equalsIgnoreCase(parsingMethod.trim());
+    }
+
+    private Duration connectionTestTimeout(ModelSettings modelSettings) {
+        int configuredSeconds = Math.max(1, modelSettings.requestTimeoutMinutes()) * 60;
+        return Duration.ofSeconds(Math.min(configuredSeconds, 60));
+    }
+
+    private String rootMessage(Throwable throwable) {
+        Throwable current = throwable;
+        while (current.getCause() != null) {
+            current = current.getCause();
+        }
+        String message = current.getMessage();
+        if (message == null || message.isBlank()) {
+            message = throwable.getMessage();
+        }
+        return message == null || message.isBlank() ? current.getClass().getSimpleName() : message;
     }
 
     private String appendProcessingInstructions(String prompt, ProcessingSettings processingSettings) {

@@ -33,11 +33,11 @@
       <VBox maxWidth="760.0" spacing="20.0">
         <VBox alignment="CENTER" spacing="6.0">
           <Text styleClass="page-title"
-                text="Search arXiv papers"
+                text="Search arXiv papers or upload a PDF"
                 textAlignment="CENTER"
                 wrappingWidth="760.0" />
           <Text styleClass="page-subtitle"
-                text="Find scientific papers and summarize them"
+                text="Find scientific papers, open a local PDF and summarize it"
                 textAlignment="CENTER"
                 wrappingWidth="760.0" />
         </VBox>
@@ -52,6 +52,11 @@
                   prefHeight="38.0"
                   prefWidth="92.0"
                   text="Search" />
+          <Button fx:id="uploadPdfButton"
+                  mnemonicParsing="false"
+                  prefHeight="38.0"
+                  prefWidth="112.0"
+                  text="Upload PDF" />
         </HBox>
 
         <FlowPane hgap="8.0" vgap="8.0">
@@ -68,6 +73,11 @@
         <ListView fx:id="paperResultsListView"
                   prefHeight="360.0"
                   VBox.vgrow="ALWAYS" />
+        <Button fx:id="loadMoreButton"
+                mnemonicParsing="false"
+                maxWidth="1.7976931348623157E308"
+                prefHeight="36.0"
+                text="More results" />
         <Label fx:id="errorLabel"
                maxWidth="1.7976931348623157E308"
                text="" />

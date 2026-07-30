@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.concurrent.Executors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class OllamaClientSettingsTest {
@@ -67,6 +68,7 @@ class OllamaClientSettingsTest {
                 2
         );
         ProcessingSettings processingSettings = new ProcessingSettings(
+                "Auto",
                 "Auto",
                 6000,
                 500,
@@ -190,6 +192,166 @@ class OllamaClientSettingsTest {
         assertEquals("user", requestJson.get("messages").get(0).get("role").asText());
     }
 
+    @Test
+    void extractTextFromImageUsesUnlimitedOcrChatModel() throws IOException {
+        ChatHandler chatHandler = new ChatHandler();
+        server.createContext("/api/chat", chatHandler);
+        OllamaClient ollamaClient = new OllamaClient(
+                HttpClient.newBuilder()
+                        .connectTimeout(Duration.ofSeconds(2))
+                        .build(),
+                objectMapper
+        );
+        ModelSettings modelSettings = new ModelSettings(
+                "Ollama",
+                "summary-model",
+                "http://localhost:" + server.getAddress().getPort(),
+                "Auto",
+                "",
+                "",
+                false,
+                8192,
+                1024,
+                2
+        );
+
+        String result = ollamaClient.extractTextFromImage("base64-png", 3, modelSettings);
+
+        assertEquals("OCR text", result);
+        JsonNode requestJson = objectMapper.readTree(chatHandler.requests.get(0));
+        assertEquals(OllamaClient.UNLIMITED_OCR_MODEL, requestJson.get("model").asText());
+        assertEquals("user", requestJson.get("messages").get(0).get("role").asText());
+        assertTrue(requestJson.get("messages").get(0).get("content").asText().contains("page 3"));
+        assertEquals("base64-png", requestJson.get("messages").get(0).get("images").get(0).asText());
+    }
+
+    @Test
+    void testConnectionChecksOllamaModelAvailability() {
+        server.createContext("/api/tags", new StaticJsonHandler("""
+                {
+                  "models": [
+                    {
+                      "name": "qwen3:8b",
+                      "model": "qwen3:8b"
+                    }
+                  ]
+                }
+                """));
+        OllamaClient ollamaClient = new OllamaClient(
+                HttpClient.newBuilder()
+                        .connectTimeout(Duration.ofSeconds(2))
+                        .build(),
+                objectMapper
+        );
+        ModelSettings modelSettings = new ModelSettings(
+                "Ollama",
+                "qwen3:8b",
+                "http://localhost:" + server.getAddress().getPort(),
+                "Auto",
+                "",
+                "",
+                false,
+                8192,
+                1024,
+                2
+        );
+
+        OllamaClient.ConnectionTestResult result = ollamaClient.testConnection(
+                modelSettings,
+                AppSettings.defaults().processing()
+        );
+
+        assertTrue(result.successful());
+        assertTrue(result.message().contains("Connected to Ollama"));
+    }
+
+    @Test
+    void testConnectionReportsMissingOllamaModel() {
+        server.createContext("/api/tags", new StaticJsonHandler("""
+                {
+                  "models": []
+                }
+                """));
+        OllamaClient ollamaClient = new OllamaClient(
+                HttpClient.newBuilder()
+                        .connectTimeout(Duration.ofSeconds(2))
+                        .build(),
+                objectMapper
+        );
+        ModelSettings modelSettings = new ModelSettings(
+                "Ollama",
+                "missing-model",
+                "http://localhost:" + server.getAddress().getPort(),
+                "Auto",
+                "",
+                "",
+                false,
+                8192,
+                1024,
+                2
+        );
+
+        OllamaClient.ConnectionTestResult result = ollamaClient.testConnection(
+                modelSettings,
+                AppSettings.defaults().processing()
+        );
+
+        assertFalse(result.successful());
+        assertTrue(result.message().contains("ollama pull missing-model"));
+    }
+
+    @Test
+    void testConnectionChecksUnlimitedOcrModelWhenParsingUsesOcr() {
+        server.createContext("/api/tags", new StaticJsonHandler("""
+                {
+                  "models": [
+                    {
+                      "name": "qwen3:8b",
+                      "model": "qwen3:8b"
+                    }
+                  ]
+                }
+                """));
+        OllamaClient ollamaClient = new OllamaClient(
+                HttpClient.newBuilder()
+                        .connectTimeout(Duration.ofSeconds(2))
+                        .build(),
+                objectMapper
+        );
+        ModelSettings modelSettings = new ModelSettings(
+                "Ollama",
+                "qwen3:8b",
+                "http://localhost:" + server.getAddress().getPort(),
+                "Auto",
+                "",
+                "",
+                false,
+                8192,
+                1024,
+                2
+        );
+        ProcessingSettings processingSettings = new ProcessingSettings(
+                "Unlimited-OCR",
+                "Auto",
+                6000,
+                500,
+                SummaryType.TLDR,
+                "English",
+                true,
+                true,
+                false,
+                false
+        );
+
+        OllamaClient.ConnectionTestResult result = ollamaClient.testConnection(
+                modelSettings,
+                processingSettings
+        );
+
+        assertFalse(result.successful());
+        assertTrue(result.message().contains("ollama pull " + OllamaClient.UNLIMITED_OCR_MODEL));
+    }
+
     private static class FakeOllamaHandler implements HttpHandler {
 
         private final List<String> requests = new ArrayList<>();
@@ -203,6 +365,49 @@ class OllamaClientSettingsTest {
                       "done": true
                     }
                     """.getBytes(StandardCharsets.UTF_8);
+            exchange.getResponseHeaders().add("Content-Type", "application/json");
+            exchange.sendResponseHeaders(200, responseBytes.length);
+            try (OutputStream outputStream = exchange.getResponseBody()) {
+                outputStream.write(responseBytes);
+            }
+        }
+    }
+
+    private static class ChatHandler implements HttpHandler {
+
+        private final List<String> requests = new ArrayList<>();
+
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            requests.add(new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8));
+            byte[] responseBytes = """
+                    {
+                      "message": {
+                        "role": "assistant",
+                        "content": " title [1, 2, 3, 4]OCR text "
+                      },
+                      "done": true
+                    }
+                    """.getBytes(StandardCharsets.UTF_8);
+            exchange.getResponseHeaders().add("Content-Type", "application/json");
+            exchange.sendResponseHeaders(200, responseBytes.length);
+            try (OutputStream outputStream = exchange.getResponseBody()) {
+                outputStream.write(responseBytes);
+            }
+        }
+    }
+
+    private static class StaticJsonHandler implements HttpHandler {
+
+        private final String responseBody;
+
+        private StaticJsonHandler(String responseBody) {
+            this.responseBody = responseBody;
+        }
+
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            byte[] responseBytes = responseBody.getBytes(StandardCharsets.UTF_8);
             exchange.getResponseHeaders().add("Content-Type", "application/json");
             exchange.sendResponseHeaders(200, responseBytes.length);
             try (OutputStream outputStream = exchange.getResponseBody()) {
