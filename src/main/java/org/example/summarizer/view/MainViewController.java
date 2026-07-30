@@ -2,12 +2,14 @@ package org.example.summarizer.view;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import javafx.stage.FileChooser;
 import org.example.summarizer.domain.Paper;
 import org.example.summarizer.service.NavigationService;
 import org.example.summarizer.viewmodel.Category;
 import org.example.summarizer.viewmodel.MainViewModel;
 import org.example.summarizer.viewmodel.PaperViewModel;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,6 +31,10 @@ public class MainViewController {
 
     @FXML
     private Button searchButton;
+    @FXML
+    private Button uploadPdfButton;
+    @FXML
+    private Button loadMoreButton;
 
     @FXML
     private ListView<PaperViewModel> paperResultsListView;
@@ -87,10 +93,15 @@ public class MainViewController {
 
         searchField.textProperty().bindBidirectional(mainViewModel.searchQueryProperty());
         searchButton.disableProperty().bind(mainViewModel.loading());
+        loadMoreButton.visibleProperty().bind(mainViewModel.loadMoreVisible());
+        loadMoreButton.managedProperty().bind(mainViewModel.loadMoreVisible());
+        loadMoreButton.disableProperty().bind(mainViewModel.loading().or(mainViewModel.loadMoreAvailable().not()));
         paperResultsListView.setItems(mainViewModel.papers());
 
         errorLabel.textProperty().bind(mainViewModel.errorMessage());
         searchButton.setOnAction(event -> mainViewModel.search());
+        uploadPdfButton.setOnAction(event -> uploadPdf());
+        loadMoreButton.setOnAction(event -> mainViewModel.loadMore());
 
         toggleGroup.selectedToggleProperty().addListener(
                 (observable, oldToggle, newToggle) -> {
@@ -111,6 +122,24 @@ public class MainViewController {
                 }
             }
         });
+    }
+
+    private void uploadPdf() {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Choose PDF file");
+        fileChooser.getExtensionFilters().add(
+                new FileChooser.ExtensionFilter("PDF files", "*.pdf")
+        );
+
+        File selectedFile = fileChooser.showOpenDialog(uploadPdfButton.getScene().getWindow());
+        if (selectedFile == null) {
+            return;
+        }
+
+        Paper uploadedPaper = mainViewModel.createLocalPdfPaper(selectedFile.toPath());
+        if (onPaperSelected != null) {
+            onPaperSelected.accept(uploadedPaper);
+        }
     }
 
     private void configurePaperResultsView() {

@@ -47,6 +47,35 @@ class SQLiteSummaryRepositoryTest {
     }
 
     @Test
+    void saveWithZeroIdCreatesNewRowsInsteadOfOverwriting() {
+        Summary firstSummary = new Summary(0, "first title", "author 1", "first summary", LocalDate.of(2026, 5, 3), "http:first_pdf_link", SummaryType.STRUCTURED);
+        Summary secondSummary = new Summary(0, "second title", "author 2", "second summary", LocalDate.of(2026, 5, 4), "http:second_pdf_link", SummaryType.TLDR);
+
+        summaryRepository.save(firstSummary);
+        summaryRepository.save(secondSummary);
+
+        List<Summary> savedSummaries = summaryRepository.findAll();
+        assertEquals(2, savedSummaries.size());
+        assertEquals("first summary", savedSummaries.get(0).summary());
+        assertEquals("second summary", savedSummaries.get(1).summary());
+        assertEquals(1, savedSummaries.get(0).id());
+        assertEquals(2, savedSummaries.get(1).id());
+    }
+
+    @Test
+    void deleteByIdRemovesOnlySelectedSummary() {
+        Summary firstSummary = new Summary(1, "first title", "author 1", "first summary", LocalDate.of(2026, 5, 3), "http:first_pdf_link", SummaryType.STRUCTURED);
+        Summary secondSummary = new Summary(2, "second title", "author 2", "second summary", LocalDate.of(2026, 5, 4), "http:second_pdf_link", SummaryType.TLDR);
+        summaryRepository.save(firstSummary);
+        summaryRepository.save(secondSummary);
+
+        summaryRepository.deleteById(1);
+
+        assertTrue(summaryRepository.findByID(1).isEmpty());
+        assertEquals(List.of(secondSummary), summaryRepository.findAll());
+    }
+
+    @Test
     void testSaveAndFindByPdfLinkAndTypeMethods() {
 
         Summary summary = new Summary(1, "sample title", "author 1, author 2", "sample summary of some paper", LocalDate.of(2026, 5, 3), "http:pdf_link", SummaryType.STRUCTURED);

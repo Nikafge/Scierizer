@@ -17,6 +17,10 @@ public class DBInitializer {
         createDirectory();
     }
 
+    public Path getAppDbPath() {
+        return appDbPath;
+    }
+
     public void createDirectory() {
         try {
             Files.createDirectories(appDbPath);

@@ -20,28 +20,36 @@ public class SQLitePaperRepository implements PaperRepository {
 
     @Override
     public void save(Paper paper) {
-        String sqlRequest = """
-                INSERT INTO paper (id, title, pdf_link, authors, date_published, date_updated, abstract)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
-                ON CONFLICT(id) DO UPDATE SET
-                title = excluded.title,
-                pdf_link = excluded.pdf_link,
-                authors = excluded.authors,
-                date_published = excluded.date_published,
-                date_updated = excluded.date_updated,
-                abstract = excluded.abstract
-                """;
+        String sqlRequest = paper.id() <= 0
+                ? """
+                    INSERT INTO paper (title, pdf_link, authors, date_published, date_updated, abstract)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                    """
+                : """
+                    INSERT INTO paper (id, title, pdf_link, authors, date_published, date_updated, abstract)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                    ON CONFLICT(id) DO UPDATE SET
+                    title = excluded.title,
+                    pdf_link = excluded.pdf_link,
+                    authors = excluded.authors,
+                    date_published = excluded.date_published,
+                    date_updated = excluded.date_updated,
+                    abstract = excluded.abstract
+                    """;
 
         try(Connection connection = dbInitializer.getConnection();
             PreparedStatement statement = connection.prepareStatement(sqlRequest)) {
 
-            statement.setInt(1, paper.id());
-            statement.setString(2, paper.title());
-            statement.setString(3, paper.pdfLink());
-            statement.setString(4, paper.authors());
-            statement.setString(5, LocalDateTransformer.convertToString(paper.datePublished()));
-            statement.setString(6, LocalDateTransformer.convertToString(paper.dateUpdated()));
-            statement.setString(7, paper.abstractText());
+            int parameterIndex = 1;
+            if (paper.id() > 0) {
+                statement.setInt(parameterIndex++, paper.id());
+            }
+            statement.setString(parameterIndex++, paper.title());
+            statement.setString(parameterIndex++, paper.pdfLink());
+            statement.setString(parameterIndex++, paper.authors());
+            statement.setString(parameterIndex++, LocalDateTransformer.convertToString(paper.datePublished()));
+            statement.setString(parameterIndex++, LocalDateTransformer.convertToString(paper.dateUpdated()));
+            statement.setString(parameterIndex, paper.abstractText());
             statement.executeUpdate();
 
 
@@ -90,6 +98,22 @@ public class SQLitePaperRepository implements PaperRepository {
             return papers;
         } catch (SQLException e) {
             throw new RuntimeException("Could not load saved papers", e);
+        }
+    }
+
+    @Override
+    public void deleteById(int id) {
+        String sqlRequest = """
+                DELETE FROM paper
+                WHERE id = ?
+                """;
+
+        try (Connection connection = dbInitializer.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sqlRequest)) {
+            statement.setInt(1, id);
+            statement.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException("Could not delete saved paper", e);
         }
     }
 

@@ -1,24 +1,52 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ListView?>
-<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
-<?import javafx.scene.text.Font?>
 
-<VBox prefHeight="400.0" prefWidth="640.0" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.example.summarizer.view.SavedContentController">
-   <children>
+<BorderPane prefHeight="720.0"
+            prefWidth="1120.0"
+            styleClass="app-root"
+            stylesheets="@app.css"
+            xmlns="http://javafx.com/javafx/26"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="org.example.summarizer.view.SavedContentController">
+   <top>
       <fx:include fx:id="topNavigation" source="TopNavigation.fxml" />
-      <AnchorPane prefHeight="358.0" prefWidth="640.0" VBox.vgrow="ALWAYS">
-         <children>
-            <Label fx:id="titleLabel" layoutX="168.0" layoutY="32.0" prefHeight="30.0" prefWidth="304.0" text="Saved Content" textAlignment="CENTER">
-               <font>
-                  <Font size="24.0" />
-               </font>
-            </Label>
-            <ListView fx:id="savedItemsListView" layoutX="119.0" layoutY="80.0" prefHeight="220.0" prefWidth="402.0" />
-            <Label fx:id="emptyLabel" layoutX="211.0" layoutY="164.0" prefHeight="21.0" prefWidth="218.0" text="Nothing saved yet" textAlignment="CENTER" />
-         </children>
-      </AnchorPane>
-   </children>
-</VBox>
+   </top>
+
+   <center>
+      <StackPane alignment="TOP_CENTER" styleClass="page-surface">
+         <padding>
+            <Insets top="40.0" right="40.0" bottom="40.0" left="40.0" />
+         </padding>
+
+         <VBox maxWidth="900.0" spacing="16.0">
+            <HBox alignment="CENTER_LEFT" spacing="12.0">
+               <Label fx:id="titleLabel"
+                      styleClass="page-title"
+                      text="Saved Content" />
+               <Region HBox.hgrow="ALWAYS" />
+               <Button fx:id="deleteSelectedButton"
+                       mnemonicParsing="false"
+                       text="Delete selected" />
+            </HBox>
+
+            <ListView fx:id="savedItemsListView"
+                      prefHeight="500.0"
+                      VBox.vgrow="ALWAYS" />
+            <Label fx:id="emptyLabel"
+                   maxWidth="1.7976931348623157E308"
+                   styleClass="status-label"
+                   text="Nothing saved yet"
+                   textAlignment="CENTER" />
+         </VBox>
+      </StackPane>
+   </center>
+</BorderPane>
