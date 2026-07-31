@@ -123,7 +123,7 @@ private record OllamaGenerateResponse(
     public OllamaClient() {
         this(
                 HttpClient.newBuilder()
-                        .connectTimeout(Duration.ofSeconds(10))
+                        .connectTimeout(Duration.ofMinutes(3))
                         .build(),
                 new ObjectMapper()
         );
