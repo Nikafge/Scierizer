@@ -5,6 +5,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
@@ -66,11 +67,30 @@ public class DBInitializer {
                     title TEXT,
                     authors TEXT,
                     date_published TEXT,
-                    summary_type
+                    summary_type TEXT NOT NULL DEFAULT 'STRUCTURED'
                 )
             """);
+
+            if (!columnExists(connection, "summary", "summary_type")) {
+                statement.execute("""
+                    ALTER TABLE summary
+                    ADD COLUMN summary_type TEXT NOT NULL DEFAULT 'STRUCTURED'
+                    """);
+            }
         } catch (SQLException e) {
             throw new RuntimeException("Could not initialize database", e);
+        }
+    }
+
+    private boolean columnExists(Connection connection, String tableName, String columnName) throws SQLException {
+        try (Statement statement = connection.createStatement();
+             ResultSet resultSet = statement.executeQuery("PRAGMA table_info(" + tableName + ")")) {
+            while (resultSet.next()) {
+                if (columnName.equals(resultSet.getString("name"))) {
+                    return true;
+                }
+            }
+            return false;
         }
     }
 }

@@ -73,7 +73,41 @@ class DbInitializerTest {
             }
 
             assertEquals(
-                    List.of("id", "summary", "pdf_link", "title", "authors", "date_published"),
+                    List.of("id", "summary", "pdf_link", "title", "authors", "date_published", "summary_type"),
+                    columns
+            );
+        }
+    }
+
+    @Test
+    void initializeAddsSummaryTypeToExistingSummaryTable() throws SQLException {
+        try (Connection connection = dbInitializer.getConnection();
+             Statement statement = connection.createStatement()) {
+            statement.execute("""
+                CREATE TABLE summary (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    summary TEXT NOT NULL,
+                    pdf_link TEXT,
+                    title TEXT,
+                    authors TEXT,
+                    date_published TEXT
+                )
+            """);
+        }
+
+        dbInitializer.initialize();
+
+        try (Connection connection = dbInitializer.getConnection();
+             Statement statement = connection.createStatement();
+             ResultSet rs = statement.executeQuery("PRAGMA table_info(summary)")) {
+
+            var columns = new java.util.ArrayList<String>();
+            while (rs.next()) {
+                columns.add(rs.getString("name"));
+            }
+
+            assertEquals(
+                    List.of("id", "summary", "pdf_link", "title", "authors", "date_published", "summary_type"),
                     columns
             );
         }

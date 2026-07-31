@@ -9,6 +9,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Path;
+import java.sql.Connection;
+import java.sql.Statement;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -44,6 +46,29 @@ class SQLiteSummaryRepositoryTest {
         summaries.forEach(summary -> summaryRepository.save(summary));
 
         Assertions.assertEquals(summaries, summaryRepository.findAll());
+    }
+
+    @Test
+    void findAllReturnsEmptyListForMigratedEmptySummaryTable() throws Exception {
+        DBInitializer legacyDbInitializer = new DBInitializer(tempRoot.resolve("legacy-appdata"));
+        try (Connection connection = legacyDbInitializer.getConnection();
+             Statement statement = connection.createStatement()) {
+            statement.execute("""
+                CREATE TABLE summary (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    summary TEXT NOT NULL,
+                    pdf_link TEXT,
+                    title TEXT,
+                    authors TEXT,
+                    date_published TEXT
+                )
+            """);
+        }
+
+        legacyDbInitializer.initialize();
+        SQLiteSummaryRepository legacySummaryRepository = new SQLiteSummaryRepository(legacyDbInitializer);
+
+        assertEquals(List.of(), legacySummaryRepository.findAll());
     }
 
     @Test
