@@ -2,6 +2,7 @@ package org.example.summarizer.service;
 
 import org.example.summarizer.domain.Paper;
 import org.example.summarizer.domain.Summary;
+import org.example.summarizer.infrastructure.arxiv.ArxivHttpPolicy;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -44,12 +45,13 @@ public class ReportExportService {
             Path outputPath = nextAvailablePath(outputDirectory, safeFileName(paper.title()), ".pdf");
 
             if (paper.pdfLink().startsWith("http://") || paper.pdfLink().startsWith("https://")) {
-                HttpRequest request = HttpRequest.newBuilder()
-                        .uri(URI.create(paper.pdfLink()))
+                URI pdfUri = URI.create(paper.pdfLink());
+                HttpRequest request = ArxivHttpPolicy.newRequestBuilder(pdfUri)
                         .timeout(Duration.ofSeconds(30))
                         .GET()
                         .build();
-                HttpResponse<InputStream> response = httpClient.send(
+                HttpResponse<InputStream> response = ArxivHttpPolicy.send(
+                        httpClient,
                         request,
                         HttpResponse.BodyHandlers.ofInputStream()
                 );

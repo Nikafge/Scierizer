@@ -153,15 +153,6 @@
                                     <Label text="Detected video memory:"
                                            GridPane.columnIndex="0"
                                            GridPane.rowIndex="2"/>
-                                    <HBox spacing="10.0"
-                                          alignment="CENTER_LEFT"
-                                          GridPane.columnIndex="1"
-                                          GridPane.rowIndex="2">
-                                       <Label fx:id="detectedVramLabel"
-                                              text="Not detected"/>
-                                       <Button fx:id="detectVramButton"
-                                               text="Detect"/>
-                                    </HBox>
 
                                     <Label text="Context length:"
                                            GridPane.columnIndex="0"
@@ -241,7 +232,7 @@
                                               GridPane.rowIndex="2"
                                               GridPane.columnSpan="2"/>
 
-                                    <Label text="The key should be stored separately from ordinary application settings."
+                                    <Label text="Note that key is saved with ordinary application settings."
                                            wrapText="true"
                                            style="-fx-text-fill: #666666;"
                                            GridPane.columnIndex="1"

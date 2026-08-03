@@ -53,10 +53,6 @@ public class SettingsController {
     @FXML
     private ComboBox<String> contextModeComboBox;
     @FXML
-    private Label detectedVramLabel;
-    @FXML
-    private Button detectVramButton;
-    @FXML
     private Spinner<Integer> contextTokensSpinner;
     @FXML
     private Spinner<Integer> maxOutputTokensSpinner;
@@ -175,7 +171,6 @@ public class SettingsController {
         browseTemporaryDirectoryButton.setOnAction(event -> chooseDirectory(temporaryDirectoryField));
 
         refreshModelsButton.setOnAction(event -> setConnectionStatus("Model refresh is not available yet."));
-        detectVramButton.setOnAction(event -> detectedVramLabel.setText("Not detected"));
         testConnectionButton.setOnAction(event -> testConnection());
     }
 

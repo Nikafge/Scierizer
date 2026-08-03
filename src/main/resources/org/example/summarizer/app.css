@@ -23,6 +23,11 @@
     -fx-fill: #667085;
 }
 
+.source-label {
+    -fx-font-size: 11px;
+    -fx-text-fill: #667085;
+}
+
 .section-label {
     -fx-font-size: 12px;
     -fx-font-weight: 700;

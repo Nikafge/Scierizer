@@ -7,6 +7,7 @@ import org.apache.pdfbox.rendering.ImageType;
 import org.apache.pdfbox.rendering.PDFRenderer;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.example.summarizer.domain.settings.ModelSettings;
+import org.example.summarizer.infrastructure.arxiv.ArxivHttpPolicy;
 import org.example.summarizer.infrastructure.ollama.OllamaClient;
 
 import javax.imageio.ImageIO;
@@ -53,8 +54,12 @@ public class TextExtractor {
 
         Objects.requireNonNull(pdfUrl, "pdfUrl");
         HttpClient httpClient = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
-        HttpRequest httpRequest = HttpRequest.newBuilder().uri(URI.create(pdfUrl)).timeout(Duration.ofSeconds(10)).GET().build();
-        HttpResponse<InputStream> response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofInputStream());
+        HttpRequest httpRequest = ArxivHttpPolicy.newRequestBuilder(URI.create(pdfUrl)).GET().build();
+        HttpResponse<InputStream> response = ArxivHttpPolicy.send(
+                httpClient,
+                httpRequest,
+                HttpResponse.BodyHandlers.ofInputStream()
+        );
         try (InputStream inputStream = response.body()) {
             return extractFromStream(inputStream);
         }
@@ -68,8 +73,12 @@ public class TextExtractor {
     ) throws IOException, InterruptedException {
         Objects.requireNonNull(pdfUrl, "pdfUrl");
         HttpClient httpClient = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
-        HttpRequest httpRequest = HttpRequest.newBuilder().uri(URI.create(pdfUrl)).timeout(Duration.ofSeconds(10)).GET().build();
-        HttpResponse<InputStream> response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofInputStream());
+        HttpRequest httpRequest = ArxivHttpPolicy.newRequestBuilder(URI.create(pdfUrl)).GET().build();
+        HttpResponse<InputStream> response = ArxivHttpPolicy.send(
+                httpClient,
+                httpRequest,
+                HttpResponse.BodyHandlers.ofInputStream()
+        );
         try (InputStream inputStream = response.body()) {
             return extractFromStreamWithUnlimitedOcr(inputStream, ollamaClient, modelSettings);
         }

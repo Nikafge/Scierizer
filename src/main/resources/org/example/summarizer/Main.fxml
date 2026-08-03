@@ -40,6 +40,8 @@
                 text="Find scientific papers, open a local PDF and summarize it"
                 textAlignment="CENTER"
                 wrappingWidth="760.0" />
+          <Label styleClass="source-label"
+                 text="Articles obtained via arXiv" />
         </VBox>
 
         <HBox spacing="12.0">

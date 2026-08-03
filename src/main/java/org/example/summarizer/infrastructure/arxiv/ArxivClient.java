@@ -31,10 +31,14 @@ public class ArxivClient {
 
         HttpClient httpClient = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
 
-        HttpRequest httpRequest = HttpRequest.newBuilder().uri(URI.create(resultingUrl)).timeout(Duration.ofSeconds(10)).GET().build();
+        HttpRequest httpRequest = ArxivHttpPolicy.newRequestBuilder(URI.create(resultingUrl)).GET().build();
 
         try {
-            HttpResponse<String> response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            HttpResponse<String> response = ArxivHttpPolicy.send(
+                    httpClient,
+                    httpRequest,
+                    HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8)
+            );
             if (response.statusCode() != 200) {
                 throw new IOException("ArXiv returned error!");
             }
@@ -51,7 +55,6 @@ public class ArxivClient {
             return resultingPapers;
         }
         catch (IOException e) {
-            Thread.currentThread().interrupt();
             throw new RuntimeException("Failed to get response!", e);
         }
     }
