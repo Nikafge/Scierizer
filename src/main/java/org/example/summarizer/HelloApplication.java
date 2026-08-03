@@ -51,7 +51,7 @@ public class HelloApplication extends Application {
         initializeNavigation();
 
         showMainView();
-        primaryStage.setTitle("Arxiv Summarizer");
+        primaryStage.setTitle("Summarizer for arXiv");
         primaryStage.setMinWidth(900);
         primaryStage.setMinHeight(620);
         primaryStage.show();
