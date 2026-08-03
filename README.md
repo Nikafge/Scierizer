@@ -1,4 +1,4 @@
-# Summarizer
+# Scierizer
 
 A JavaFX desktop application for summarizing texts and articles using LLMs, including both cloud-based and local models via Ollama.
 <img width="1116" height="742" alt="image" src="https://github.com/user-attachments/assets/fa1d1f66-5c8c-4d82-b931-bdc5ef5f0bd0" />
@@ -45,7 +45,7 @@ The application includes built-in search for scientific papers on arXiv by title
 Clone the repository:
 
 ```
-git clone https://github.com/Nikafge/Summarizer.git
+git clone https://github.com/Nikafge/Scierizer.git
 ```
 
 ### Building an `.exe` File
@@ -59,7 +59,7 @@ After the build is complete, a `windows` directory will be created containing th
 
 Executable path:
 ```
-target\windows\Summarizer\Summarizer.exe
+target\windows\Scierizer\Scierizer.exe
 ```
 
 ### Building a `.jar` File
@@ -79,7 +79,7 @@ target\jar
 
 To launch the application, run:
 ```
-java -jar target\jar\Summarizer.jar
+java -jar target\jar\Scierizer.jar
 ```
 
 ## Configuring LLM Providers

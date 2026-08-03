@@ -1,4 +1,4 @@
-module org.example.summarizer {
+module org.example.scierizer {
     requires javafx.controls;
     requires javafx.fxml;
     requires java.sql;
@@ -10,9 +10,9 @@ module org.example.summarizer {
     requires org.apache.pdfbox.io;
     requires com.fasterxml.jackson.databind;
     requires jdk.httpserver;
-    opens org.example.summarizer.view to javafx.fxml;
-    opens org.example.summarizer.infrastructure.ollama to com.fasterxml.jackson.databind;
-    opens org.example.summarizer.domain.settings to com.fasterxml.jackson.databind;
-    opens org.example.summarizer.viewmodel to com.fasterxml.jackson.databind;
-    exports org.example.summarizer;
+    opens org.example.scierizer.view to javafx.fxml;
+    opens org.example.scierizer.infrastructure.ollama to com.fasterxml.jackson.databind;
+    opens org.example.scierizer.domain.settings to com.fasterxml.jackson.databind;
+    opens org.example.scierizer.viewmodel to com.fasterxml.jackson.databind;
+    exports org.example.scierizer;
 }

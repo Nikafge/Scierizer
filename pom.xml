@@ -5,9 +5,9 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>org.example</groupId>
-    <artifactId>Summarizer</artifactId>
+    <artifactId>Scierizer</artifactId>
     <version>1.0-SNAPSHOT</version>
-    <name>Summarizer</name>
+    <name>Scierizer</name>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -87,7 +87,7 @@
                         <manifest>
                             <addClasspath>true</addClasspath>
                             <classpathPrefix>lib/</classpathPrefix>
-                            <mainClass>org.example.summarizer.Launcher</mainClass>
+                            <mainClass>org.example.scierizer.Launcher</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
@@ -101,7 +101,7 @@
                         <!-- Default configuration for running with: mvn clean javafx:run -->
                         <id>default-cli</id>
                         <configuration>
-                            <mainClass>org.example.summarizer/org.example.summarizer.HelloApplication</mainClass>
+                            <mainClass>org.example.scierizer/org.example.scierizer.HelloApplication</mainClass>
                             <launcher>app</launcher>
                             <jlinkZipName>app</jlinkZipName>
                             <jlinkImageName>app</jlinkImageName>

@@ -2,7 +2,7 @@
 
 ## Overview
 
-Summarizer is a JavaFX desktop application for finding, opening, summarizing, saving, and exporting scientific papers. It supports arXiv search results and user-selected local PDF files. Summaries are generated through a configurable LLM provider, with Ollama as the default local provider and OpenAI, Anthropic, or OpenAI-compatible custom endpoints available from Settings.
+Scierizer is a JavaFX desktop application for finding, opening, summarizing, saving, and exporting scientific papers. It supports arXiv search results and user-selected local PDF files. Summaries are generated through a configurable LLM provider, with Ollama as the default local provider and OpenAI, Anthropic, or OpenAI-compatible custom endpoints available from Settings.
 
 The application follows a lightweight MVVM structure:
 
@@ -17,7 +17,7 @@ The application follows a lightweight MVVM structure:
 
 `HelloApplication` creates the main object graph when the application starts:
 
-- `DBInitializer` points to the user data directory at `~/.summarizer`.
+- `DBInitializer` points to the user data directory at `~/.scierizer`.
 - `SettingsService` reads and writes `settings.json` in that directory.
 - `ArxivClient` and `PaperSearchService` provide arXiv searching.
 - `TextExtractor`, `TextShredder`, `OllamaClient`, and `SummaryService` provide document processing and summarization.
@@ -112,7 +112,7 @@ For chunked documents, `TLDR`, `EXECUTIVE`, and `RESEARCH_NOTE` use a map/reduce
 Settings are stored as JSON in:
 
 ```text
-~/.summarizer/settings.json
+~/.scierizer/settings.json
 ```
 
 `SettingsService` loads this file and fills missing or invalid values with `AppSettings.defaults()`.
@@ -139,7 +139,7 @@ Default settings include:
 The local SQLite database is stored at:
 
 ```text
-~/.summarizer/db.db
+~/.scierizer/db.db
 ```
 
 It contains:

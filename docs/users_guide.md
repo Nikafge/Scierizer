@@ -1,8 +1,8 @@
 # User Guide
 
-## What Summarizer Does
+## What Scierizer Does
 
-Summarizer is a desktop app for working with scientific papers. You can search arXiv, open a paper from the search results, upload a local PDF, generate an LLM summary, save papers and summaries locally, and export summaries as Markdown or plain text.
+Scierizer is a desktop app for working with scientific papers. You can search arXiv, open a paper from the search results, upload a local PDF, generate an LLM summary, save papers and summaries locally, and export summaries as Markdown or plain text.
 
 The app can use Ollama locally by default, or a cloud provider configured in Settings.
 
@@ -97,7 +97,7 @@ On the paper detail screen:
 Saved data remains available offline in:
 
 ```text
-~/.summarizer/db.db
+~/.scierizer/db.db
 ```
 
 Depending on Storage settings, saving a paper can also download the PDF, and saving a summary can also export a file.
@@ -136,7 +136,7 @@ When a file with the same name already exists, the app creates a new file with a
 Settings are stored in:
 
 ```text
-~/.summarizer/settings.json
+~/.scierizer/settings.json
 ```
 
 ### Model
@@ -226,7 +226,7 @@ Build a runnable JAR:
 Run it:
 
 ```text
-java -jar target\jar\Summarizer.jar
+java -jar target\jar\Scierizer.jar
 ```
 
 Build a Windows executable:
@@ -238,7 +238,7 @@ Build a Windows executable:
 The executable is created at:
 
 ```text
-target\windows\Summarizer\Summarizer.exe
+target\windows\Scierizer\Scierizer.exe
 ```
 
 ## Troubleshooting

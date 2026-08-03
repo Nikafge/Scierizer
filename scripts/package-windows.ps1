@@ -4,8 +4,8 @@ $projectRoot = Resolve-Path (Join-Path $PSScriptRoot "..")
 $targetDir = Join-Path $projectRoot "target"
 $packageInput = Join-Path $targetDir "package-input"
 $windowsOutput = Join-Path $targetDir "windows"
-$appImage = Join-Path $windowsOutput "Summarizer"
-$appExe = Join-Path $appImage "Summarizer.exe"
+$appImage = Join-Path $windowsOutput "Scierizer"
+$appExe = Join-Path $appImage "Scierizer.exe"
 
 function Require-Command($name) {
     if (-not (Get-Command $name -ErrorAction SilentlyContinue)) {
@@ -23,7 +23,7 @@ try {
         throw "Maven package build failed with exit code $LASTEXITCODE."
     }
 
-    $mainJar = Get-ChildItem -Path $targetDir -Filter "Summarizer-*.jar" |
+    $mainJar = Get-ChildItem -Path $targetDir -Filter "Scierizer-*.jar" |
             Where-Object { $_.Name -notmatch "sources|javadoc|tests" } |
             Select-Object -First 1
     if ($null -eq $mainJar) {
@@ -40,13 +40,13 @@ try {
 
     & jpackage `
         --type app-image `
-        --name Summarizer `
+        --name Scierizer `
         --app-version 1.0.0 `
         --vendor "org.example" `
         --dest $windowsOutput `
         --input $packageInput `
         --main-jar $mainJar.Name `
-        --main-class org.example.summarizer.Launcher `
+        --main-class org.example.scierizer.Launcher `
         --java-options "-Dfile.encoding=UTF-8"
     if ($LASTEXITCODE -ne 0) {
         throw "jpackage failed with exit code $LASTEXITCODE."

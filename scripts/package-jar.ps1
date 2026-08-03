@@ -4,7 +4,7 @@ $projectRoot = Resolve-Path (Join-Path $PSScriptRoot "..")
 $targetDir = Join-Path $projectRoot "target"
 $jarOutput = Join-Path $targetDir "jar"
 $libOutput = Join-Path $jarOutput "lib"
-$appJar = Join-Path $jarOutput "Summarizer.jar"
+$appJar = Join-Path $jarOutput "Scierizer.jar"
 
 function Require-Command($name) {
     if (-not (Get-Command $name -ErrorAction SilentlyContinue)) {
@@ -21,7 +21,7 @@ try {
         throw "Maven jar build failed with exit code $LASTEXITCODE."
     }
 
-    $mainJar = Get-ChildItem -Path $targetDir -Filter "Summarizer-*.jar" |
+    $mainJar = Get-ChildItem -Path $targetDir -Filter "Scierizer-*.jar" |
             Where-Object { $_.Name -notmatch "sources|javadoc|tests" } |
             Select-Object -First 1
     if ($null -eq $mainJar) {
